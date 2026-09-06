@@ -1,4 +1,4 @@
-import { put } from '@vercel/blob';
+import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
@@ -9,38 +9,32 @@ async function checkAuth() {
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
-  if (!(await checkAuth())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { searchParams } = new URL(request.url);
-  const filename = searchParams.get('filename');
-
-  if (!filename) {
-    return NextResponse.json({ error: 'Filename is required' }, { status: 400 });
-  }
-  
-  if (!request.body) {
-    return NextResponse.json({ error: 'Request body is required' }, { status: 400 });
-  }
-
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return NextResponse.json({ 
-      error: 'Internal Server Error', 
-      details: 'BLOB_READ_WRITE_TOKEN is completely missing from Vercel environment variables. You must connect the Blob store properly in Vercel settings.' 
-    }, { status: 500 });
-  }
+  const body = (await request.json()) as HandleUploadBody;
 
   try {
-    // Vercel Serverless sometimes fails passing the raw stream, so we buffer it first
-    const buffer = await request.arrayBuffer();
-    const blob = await put(filename, buffer, {
-      access: 'public',
+    const jsonResponse = await handleUpload({
+      body,
+      request,
+      onBeforeGenerateToken: async (pathname) => {
+        if (!(await checkAuth())) {
+          throw new Error('Unauthorized');
+        }
+        return {
+          allowedContentTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/heic'],
+          tokenPayload: JSON.stringify({}),
+        };
+      },
+      onUploadCompleted: async ({ blob, tokenPayload }) => {
+        console.log('Upload completed', blob.url);
+      },
     });
 
-    return NextResponse.json(blob);
+    return NextResponse.json(jsonResponse);
   } catch (error: any) {
-    console.error('Failed to upload image:', error);
-    return NextResponse.json({ error: 'Internal Server Error', details: error.message || String(error) }, { status: 500 });
+    console.error('Failed to handle upload:', error);
+    return NextResponse.json(
+      { error: 'Internal Server Error', details: error.message },
+      { status: 500 }
+    );
   }
 }

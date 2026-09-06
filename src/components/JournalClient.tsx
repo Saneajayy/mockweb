@@ -6,7 +6,7 @@ import { SendHorizontal, Loader2, Trash2, Heart, Image as ImageIcon, X } from 'l
 import { clsx } from 'clsx';
 import { isToday, isYesterday, format } from 'date-fns';
 import IdentityPicker from './IdentityPicker';
-import Image from 'next/image';
+import { upload } from '@vercel/blob/client';
 
 interface Entry {
   id: string;
@@ -84,14 +84,11 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
 
     try {
       if (imageFile) {
-        const response = await fetch(`/api/upload?filename=${encodeURIComponent(imageFile.name)}`, {
-          method: 'POST',
-          body: imageFile,
+        const newBlob = await upload(imageFile.name, imageFile, {
+          access: 'public',
+          handleUploadUrl: '/api/upload',
         });
-        const blob = await response.json();
-        if (blob.url) {
-          uploadedImageUrl = blob.url;
-        }
+        uploadedImageUrl = newBlob.url;
       }
 
       const tempId = crypto.randomUUID();
