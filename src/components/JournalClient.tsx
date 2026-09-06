@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import useSWR, { mutate } from 'swr';
-import { SendHorizontal, Loader2, Trash2, Heart, Image as ImageIcon, X, UserCircle, MoreVertical } from 'lucide-react';
+import { SendHorizontal, Loader2, Trash2, Heart, Image as ImageIcon, X, UserCircle, MoreVertical, LogOut } from 'lucide-react';
 import { clsx } from 'clsx';
 import { isToday, isYesterday, format } from 'date-fns';
 import IdentityPicker from './IdentityPicker';
@@ -310,6 +310,18 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
               >
                 <UserCircle className="w-5 h-5" />
                 <span>Change profile picture</span>
+              </button>
+              <div className="h-px bg-slate-800 my-1 mx-2"></div>
+              <button 
+                onClick={() => {
+                  localStorage.removeItem('journal_author');
+                  setLocalAuthor(null);
+                  setShowSettings(false);
+                }}
+                className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-slate-800 flex items-center space-x-3 whitespace-nowrap"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Switch Profile</span>
               </button>
             </div>
           )}
