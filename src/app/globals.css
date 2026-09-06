@@ -3,6 +3,7 @@
 @theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --font-sans: "Elms Sans", sans-serif;
 }
 
 @layer base {

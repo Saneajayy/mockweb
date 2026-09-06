@@ -300,13 +300,13 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
           </button>
           
           {showSettings && (
-            <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-xl shadow-xl overflow-hidden py-1 z-30">
+            <div className="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-800 rounded-xl shadow-xl overflow-hidden py-1 z-30">
               <input type="file" ref={profileInputRef} onChange={handleProfileSelect} accept="image/*" className="hidden" />
               <button 
                 onClick={() => profileInputRef.current?.click()}
-                className="w-full px-4 py-3 text-left text-sm text-slate-200 hover:bg-slate-800 flex items-center space-x-2"
+                className="w-full px-4 py-3 text-left text-sm text-slate-200 hover:bg-slate-800 flex items-center space-x-3 whitespace-nowrap"
               >
-                <UserCircle className="w-4 h-4" />
+                <UserCircle className="w-5 h-5" />
                 <span>Change profile picture</span>
               </button>
             </div>
@@ -357,14 +357,14 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                   <div className={clsx(
                     "relative group shadow-sm text-[15px] leading-relaxed break-words whitespace-pre-wrap",
                     isMine 
-                      ? "bg-blue-600 text-white rounded-2xl rounded-br-[4px]" 
-                      : "bg-slate-800 text-slate-100 rounded-2xl rounded-bl-[4px]",
+                      ? "bg-blue-600 text-white rounded-xl rounded-br-[4px]" 
+                      : "bg-slate-800 text-slate-100 rounded-xl rounded-bl-[4px]",
                     !entry.content && entry.image_url ? "bg-transparent shadow-none" : ""
                   )}>
                     {entry.image_url && (
                       <div className={clsx(
                         "relative w-full overflow-hidden",
-                        !entry.content ? "rounded-2xl" : "rounded-t-2xl rounded-b-[4px]"
+                        !entry.content ? "rounded-xl" : "rounded-t-xl rounded-b-[4px]"
                       )}>
                         <img 
                           src={entry.image_url} 
@@ -424,7 +424,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         <div ref={bottomRef} className="h-2" />
       </main>
 
-      <footer className="bg-slate-900 border-t border-slate-800 p-4 pb-[env(safe-area-inset-bottom,16px)]">
+      <footer className="bg-transparent p-4 pb-[env(safe-area-inset-bottom,16px)]">
         {imagePreview && (
           <div className="mb-3 relative inline-block">
             <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-slate-700">
@@ -441,7 +441,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         
         <form 
           onSubmit={handleSend}
-          className="flex items-end space-x-2 bg-slate-950 p-2 focus-within:ring-1 focus-within:ring-blue-900 focus-within:bg-slate-900 transition-all border border-slate-800 rounded-2xl"
+          className="flex items-end space-x-2 bg-slate-900 p-2 focus-within:ring-1 focus-within:ring-blue-900 focus-within:bg-slate-800 transition-all border border-slate-700 shadow-xl rounded-3xl"
         >
           <button
             type="button"
