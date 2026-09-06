@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import useSWR from 'swr';
-import { SendHorizontal, Loader2, Trash2, Heart, Image as ImageIcon, X } from 'lucide-react';
+import useSWR, { mutate } from 'swr';
+import { SendHorizontal, Loader2, Trash2, Heart, Image as ImageIcon, X, UserCircle, MoreVertical } from 'lucide-react';
 import { clsx } from 'clsx';
 import { isToday, isYesterday, format } from 'date-fns';
 import IdentityPicker from './IdentityPicker';
@@ -12,9 +12,15 @@ interface Entry {
   id: string;
   author: string;
   content: string;
-  image_url?: string | null;
-  reactions?: Record<string, string>;
+  image_url: string | null;
+  reactions: Record<string, string>;
   created_at: string;
+}
+
+interface Profile {
+  id: string;
+  profile_image_url: string | null;
+  last_seen: string;
 }
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -31,21 +37,42 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
   
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const profileInputRef = useRef<HTMLInputElement>(null);
   
-  const { data, error, mutate, isLoading } = useSWR<{ entries: Entry[] }>('/api/entries', fetcher, {
+  const { data, error, isLoading } = useSWR<{ entries: Entry[] }>('/api/entries', fetcher, {
     refreshInterval: 15000,
-    revalidateOnFocus: true,
   });
+
+  const { data: profilesData } = useSWR<{ profiles: Record<string, Profile> }>('/api/profiles', fetcher, {
+    refreshInterval: 10000,
+  });
+
+  const profiles = profilesData?.profiles || {};
 
   useEffect(() => {
     const saved = localStorage.getItem('journal_author');
-    if (saved) {
+    if (saved === authorA || saved === authorB) {
       setLocalAuthor(saved);
     }
-  }, []);
+  }, [authorA, authorB]);
+
+  useEffect(() => {
+    if (!localAuthor) return;
+    const ping = () => {
+      fetch('/api/ping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ author: localAuthor }),
+      }).catch(() => {});
+    };
+    ping();
+    const interval = setInterval(ping, 30000);
+    return () => clearInterval(interval);
+  }, [localAuthor]);
 
   const handleSelectAuthor = (author: string) => {
     localStorage.setItem('journal_author', author);
@@ -65,6 +92,24 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
     if (file) {
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleProfileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !localAuthor) return;
+
+    try {
+      const response = await fetch(`/api/profiles?author=${localAuthor}&filename=${encodeURIComponent(file.name)}`, {
+        method: 'POST',
+        body: file,
+      });
+      if (response.ok) {
+        mutate('/api/profiles');
+        setShowSettings(false);
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -215,8 +260,60 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
     return <IdentityPicker authorA={authorA} authorB={authorB} onSelect={handleSelectAuthor} />;
   }
 
+  const partnerName = localAuthor === authorA ? authorB : authorA;
+  const partnerProfile = profiles[partnerName];
+  const selfProfile = profiles[localAuthor];
+
+  let partnerStatus = 'Offline';
+  if (partnerProfile?.last_seen) {
+    const lastSeenDate = new Date(partnerProfile.last_seen);
+    const diffInMins = (Date.now() - lastSeenDate.getTime()) / (1000 * 60);
+    if (diffInMins < 2) {
+      partnerStatus = 'Online';
+    } else {
+      partnerStatus = `last seen ${isToday(lastSeenDate) ? 'today at' : isYesterday(lastSeenDate) ? 'yesterday at' : format(lastSeenDate, 'MMM d')} ${format(lastSeenDate, 'h:mm a')}`;
+    }
+  }
+
   return (
     <div className="flex flex-col h-[100dvh] bg-slate-950 font-sans text-slate-200">
+      
+      {/* Top Header */}
+      <header className="sticky top-0 z-20 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center border border-slate-700">
+            {partnerProfile?.profile_image_url ? (
+              <img src={partnerProfile.profile_image_url} alt={partnerName} className="w-full h-full object-cover" />
+            ) : (
+              <UserCircle className="w-6 h-6 text-slate-500" />
+            )}
+          </div>
+          <div className="flex flex-col">
+            <span className="font-medium text-slate-100">{partnerName}</span>
+            <span className="text-[11px] text-slate-400">{partnerStatus}</span>
+          </div>
+        </div>
+
+        <div className="relative">
+          <button onClick={() => setShowSettings(!showSettings)} className="p-2 text-slate-400 hover:text-slate-200">
+            <MoreVertical className="w-5 h-5" />
+          </button>
+          
+          {showSettings && (
+            <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-xl shadow-xl overflow-hidden py-1 z-30">
+              <input type="file" ref={profileInputRef} onChange={handleProfileSelect} accept="image/*" className="hidden" />
+              <button 
+                onClick={() => profileInputRef.current?.click()}
+                className="w-full px-4 py-3 text-left text-sm text-slate-200 hover:bg-slate-800 flex items-center space-x-2"
+              >
+                <UserCircle className="w-4 h-4" />
+                <span>Change profile picture</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
+
       <main className="flex-1 overflow-y-auto px-4 py-6 flex flex-col space-y-6">
         {isLoading && (
           <div className="flex-1 flex items-center justify-center">
@@ -260,14 +357,14 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                   <div className={clsx(
                     "relative group shadow-sm text-[15px] leading-relaxed break-words whitespace-pre-wrap",
                     isMine 
-                      ? "bg-blue-600 text-white rounded-3xl rounded-br-[4px]" 
-                      : "bg-slate-800 text-slate-100 rounded-3xl rounded-bl-[4px]",
+                      ? "bg-blue-600 text-white rounded-2xl rounded-br-[4px]" 
+                      : "bg-slate-800 text-slate-100 rounded-2xl rounded-bl-[4px]",
                     !entry.content && entry.image_url ? "bg-transparent shadow-none" : ""
                   )}>
                     {entry.image_url && (
                       <div className={clsx(
                         "relative w-full overflow-hidden",
-                        !entry.content ? "rounded-3xl" : "rounded-t-3xl rounded-b-[4px]"
+                        !entry.content ? "rounded-2xl" : "rounded-t-2xl rounded-b-[4px]"
                       )}>
                         <img 
                           src={entry.image_url} 
