@@ -43,7 +43,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const profileInputRef = useRef<HTMLInputElement>(null);
   
-  const { data, error, isLoading } = useSWR<{ entries: Entry[] }>('/api/entries', fetcher, {
+  const { data, error, mutate: mutateEntries, isLoading } = useSWR<{ entries: Entry[] }>('/api/entries', fetcher, {
     refreshInterval: 15000,
   });
 
@@ -159,7 +159,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         created_at: new Date().toISOString(),
       };
 
-      mutate(
+      mutateEntries(
         (prev) => {
           if (!prev) return { entries: [optimisticEntry] };
           return { entries: [...prev.entries, optimisticEntry] };
@@ -183,7 +183,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
       });
 
       if (!res.ok) throw new Error('Failed to send');
-      mutate();
+      mutateEntries();
     } catch (err) {
       console.error(err);
     } finally {
@@ -200,7 +200,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ author: localAuthor }),
       });
-      mutate();
+      mutateEntries();
     } catch (err) {
       console.error(err);
     } finally {
@@ -211,7 +211,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
   const handleReact = async (id: string) => {
     if (!localAuthor) return;
     
-    mutate((prev) => {
+    mutateEntries((prev) => {
       if (!prev) return prev;
       return {
         entries: prev.entries.map(entry => {
@@ -235,7 +235,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ author: localAuthor }),
       });
-      mutate();
+      mutateEntries();
     } catch (err) {
       console.error(err);
     }
