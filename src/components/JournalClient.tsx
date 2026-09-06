@@ -424,7 +424,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         <div ref={bottomRef} className="h-2" />
       </main>
 
-      <footer className="bg-transparent p-4 pb-[env(safe-area-inset-bottom,16px)]">
+      <footer className="bg-transparent px-4 pt-2 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
         {imagePreview && (
           <div className="mb-3 relative inline-block">
             <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-slate-700">
