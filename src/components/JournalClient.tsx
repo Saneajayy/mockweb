@@ -289,8 +289,10 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
             )}
           </div>
           <div className="flex flex-col">
-            <span className="font-medium text-slate-100">{partnerName}</span>
-            <span className="text-[11px] text-slate-400">{partnerStatus}</span>
+            <span className="font-medium text-slate-100 leading-tight">{partnerName}</span>
+            <span className={clsx("text-[11px] font-medium", partnerStatus === 'Online' ? "text-emerald-400" : "text-slate-400")}>
+              {partnerStatus}
+            </span>
           </div>
         </div>
 
@@ -441,12 +443,12 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         
         <form 
           onSubmit={handleSend}
-          className="flex items-end space-x-2 bg-slate-900 p-2 focus-within:ring-1 focus-within:ring-blue-900 focus-within:bg-slate-800 transition-all border border-slate-700 shadow-xl rounded-3xl"
+          className="flex items-end space-x-2 bg-slate-900 p-1.5 focus-within:ring-1 focus-within:ring-blue-900 focus-within:bg-slate-800 transition-all border border-slate-700 shadow-xl rounded-3xl"
         >
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="p-3 text-slate-400 hover:text-blue-400 transition-colors"
+            className="p-2.5 text-slate-400 hover:text-blue-400 transition-colors"
           >
             <ImageIcon className="w-5 h-5" />
           </button>
@@ -468,14 +470,14 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
               }
             }}
             placeholder="Message..."
-            className="flex-1 max-h-32 bg-transparent resize-none outline-none text-[15px] text-slate-100 px-2 py-3 leading-relaxed placeholder:text-slate-600"
+            className="flex-1 max-h-32 bg-transparent resize-none outline-none text-[15px] text-slate-100 px-2 py-2.5 leading-relaxed placeholder:text-slate-600"
             rows={Math.min(4, content.split('\n').length || 1)}
           />
           <button
             type="submit"
             disabled={(!content.trim() && !imageFile) || isSending}
             className={clsx(
-              "p-3 flex items-center justify-center transition-all rounded-xl",
+              "p-2.5 flex items-center justify-center transition-all rounded-xl",
               (content.trim() || imageFile) && !isSending
                 ? "bg-blue-600 text-white shadow-sm hover:bg-blue-500 active:scale-95" 
                 : "bg-slate-800 text-slate-500 cursor-not-allowed"
