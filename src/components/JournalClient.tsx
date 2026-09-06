@@ -85,19 +85,6 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
     try {
       if (imageFile) {
         try {
-          // DIAGNOSTIC FETCH
-          const diagRes = await fetch('/api/upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type: 'upload', payload: 'test' })
-          });
-          const diagText = await diagRes.text();
-          if (!diagRes.ok) {
-            alert(`SERVER ERROR DETECTED:\n\n${diagText}`);
-            setIsSending(false);
-            return;
-          }
-
           const newBlob = await upload(imageFile.name, imageFile, {
             access: 'public',
             handleUploadUrl: '/api/upload',
