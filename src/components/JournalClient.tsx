@@ -216,18 +216,11 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-rose-50/30 font-serif">
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-rose-100 px-5 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-medium text-rose-950 tracking-wide">Our Journal</h1>
-        <div className="text-sm font-medium text-rose-800 tracking-wide">
-          {localAuthor}
-        </div>
-      </header>
-
+    <div className="flex flex-col h-[100dvh] bg-slate-950 font-sans text-slate-200">
       <main className="flex-1 overflow-y-auto px-4 py-6 flex flex-col space-y-6">
         {isLoading && (
           <div className="flex-1 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 text-rose-300 animate-spin" />
+            <Loader2 className="w-8 h-8 text-slate-500 animate-spin" />
           </div>
         )}
 
@@ -237,14 +230,14 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
 
         {!isLoading && !data?.entries?.length && (
           <div className="flex-1 flex items-center justify-center opacity-60">
-            <p className="text-rose-900 text-sm">no messages here yet.</p>
+            <p className="text-slate-500 text-sm">no messages here yet.</p>
           </div>
         )}
 
         {groupedEntries && Object.entries(groupedEntries).map(([dateStr, entries]) => (
           <div key={dateStr} className="flex flex-col space-y-6">
             <div className="flex justify-center my-2">
-              <span className="text-xs font-medium text-rose-400/80 tracking-wide">
+              <span className="text-xs font-medium text-slate-500 tracking-wide">
                 {dateStr}
               </span>
             </div>
@@ -265,14 +258,17 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                   )}
                 >
                   <div className={clsx(
-                    "relative group shadow-sm text-[15px] leading-relaxed break-words whitespace-pre-wrap border",
+                    "relative group shadow-sm text-[15px] leading-relaxed break-words whitespace-pre-wrap",
                     isMine 
-                      ? "bg-rose-500 text-white border-rose-600 rounded-3xl rounded-br-[4px]" 
-                      : "bg-white text-rose-950 border-rose-200 rounded-3xl rounded-bl-[4px]"
+                      ? "bg-blue-600 text-white rounded-3xl rounded-br-[4px]" 
+                      : "bg-slate-800 text-slate-100 rounded-3xl rounded-bl-[4px]",
+                    !entry.content && entry.image_url ? "bg-transparent shadow-none" : ""
                   )}>
                     {entry.image_url && (
-                      <div className="relative w-full overflow-hidden">
-                        {/* Use standard img tag for simplicity with unknown domains */}
+                      <div className={clsx(
+                        "relative w-full overflow-hidden",
+                        !entry.content ? "rounded-3xl" : "rounded-t-3xl rounded-b-[4px]"
+                      )}>
                         <img 
                           src={entry.image_url} 
                           alt="Entry image"
@@ -290,7 +286,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                     {isMine && !isDeleting && (
                       <button 
                         onClick={() => handleDelete(entry.id, entry.author)}
-                        className="absolute -left-10 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 transition-opacity text-rose-300 hover:text-red-500"
+                        className="absolute -left-10 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-red-400"
                         title="Delete entry"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -300,23 +296,23 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                     {!isMine && (
                       <button 
                         onClick={() => handleReact(entry.id)}
-                        className="absolute -right-10 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 transition-opacity text-rose-300 hover:text-rose-500"
+                        className="absolute -right-10 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-blue-400"
                         title="React"
                       >
-                        <Heart className={clsx("w-4 h-4", iReacted && "fill-rose-500 text-rose-500")} />
+                        <Heart className={clsx("w-4 h-4", iReacted && "fill-blue-500 text-blue-500")} />
                       </button>
                     )}
                   </div>
                   
                   <div className="flex items-center space-x-2 mt-1.5 px-1">
-                    <span className="text-[11px] text-rose-400/80">
+                    <span className="text-[11px] text-slate-500">
                       {format(new Date(entry.created_at), 'h:mm a')}
                     </span>
                     {hasReactions && (
                       <div className="flex -space-x-1">
                         {Object.keys(entry.reactions || {}).map((reacter) => (
-                          <div key={reacter} className="bg-white border border-rose-100 p-0.5 rounded-full shadow-sm" title={reacter}>
-                            <Heart className="w-3 h-3 fill-rose-500 text-rose-500" />
+                          <div key={reacter} className="bg-slate-900 border border-slate-800 p-0.5 rounded-full shadow-sm" title={reacter}>
+                            <Heart className="w-3 h-3 fill-blue-500 text-blue-500" />
                           </div>
                         ))}
                       </div>
@@ -331,15 +327,15 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         <div ref={bottomRef} className="h-2" />
       </main>
 
-      <footer className="bg-white border-t border-rose-100 p-4 pb-[env(safe-area-inset-bottom,16px)]">
+      <footer className="bg-slate-900 border-t border-slate-800 p-4 pb-[env(safe-area-inset-bottom,16px)]">
         {imagePreview && (
           <div className="mb-3 relative inline-block">
-            <div className="relative w-24 h-24 border border-rose-200">
+            <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-slate-700">
               <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
             </div>
             <button 
               onClick={clearImage}
-              className="absolute -top-2 -right-2 bg-white border border-rose-200 text-rose-500 p-1 rounded-full shadow-sm"
+              className="absolute -top-2 -right-2 bg-slate-800 border border-slate-700 text-slate-300 p-1 rounded-full shadow-sm"
             >
               <X className="w-3 h-3" />
             </button>
@@ -348,12 +344,12 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         
         <form 
           onSubmit={handleSend}
-          className="flex items-end space-x-2 bg-rose-50/50 p-2 focus-within:ring-1 focus-within:ring-rose-200 focus-within:bg-white transition-all border border-rose-100"
+          className="flex items-end space-x-2 bg-slate-950 p-2 focus-within:ring-1 focus-within:ring-blue-900 focus-within:bg-slate-900 transition-all border border-slate-800 rounded-2xl"
         >
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="p-3 text-rose-400 hover:text-rose-600 transition-colors"
+            className="p-3 text-slate-400 hover:text-blue-400 transition-colors"
           >
             <ImageIcon className="w-5 h-5" />
           </button>
@@ -374,18 +370,18 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                 handleSend();
               }
             }}
-            placeholder=""
-            className="flex-1 max-h-32 bg-transparent resize-none outline-none text-[15px] text-rose-950 px-2 py-3 leading-relaxed"
+            placeholder="Message..."
+            className="flex-1 max-h-32 bg-transparent resize-none outline-none text-[15px] text-slate-100 px-2 py-3 leading-relaxed placeholder:text-slate-600"
             rows={Math.min(4, content.split('\n').length || 1)}
           />
           <button
             type="submit"
             disabled={(!content.trim() && !imageFile) || isSending}
             className={clsx(
-              "p-3 flex items-center justify-center transition-all",
+              "p-3 flex items-center justify-center transition-all rounded-xl",
               (content.trim() || imageFile) && !isSending
-                ? "bg-rose-500 text-white shadow-sm hover:bg-rose-600 active:scale-95" 
-                : "bg-rose-200/50 text-rose-300 cursor-not-allowed"
+                ? "bg-blue-600 text-white shadow-sm hover:bg-blue-500 active:scale-95" 
+                : "bg-slate-800 text-slate-500 cursor-not-allowed"
             )}
           >
             {isSending ? (
