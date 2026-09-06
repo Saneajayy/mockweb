@@ -84,11 +84,17 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
 
     try {
       if (imageFile) {
-        const newBlob = await upload(imageFile.name, imageFile, {
-          access: 'public',
-          handleUploadUrl: '/api/upload',
-        });
-        uploadedImageUrl = newBlob.url;
+        try {
+          const newBlob = await upload(imageFile.name, imageFile, {
+            access: 'public',
+            handleUploadUrl: '/api/upload',
+          });
+          uploadedImageUrl = newBlob.url;
+        } catch (uploadError: any) {
+          alert(`IMAGE UPLOAD CRASHED!\n\nReason: ${uploadError.message}\n\nIf it says token is missing, Vercel did not link your Blob correctly.`);
+          setIsSending(false);
+          return;
+        }
       }
 
       const tempId = crypto.randomUUID();
