@@ -281,7 +281,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
       {/* Top Header */}
       <header className="sticky top-0 z-20 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center border border-slate-700">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center">
             {partnerProfile?.profile_image_url ? (
               <img src={partnerProfile.profile_image_url} alt={partnerName} className="w-full h-full object-cover" />
             ) : (
