@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { cookies } from 'next/headers';
+import { del } from '@vercel/blob';
 
 async function checkAuth() {
   const cookieStore = await cookies();
@@ -14,6 +15,32 @@ export async function GET() {
   }
 
   try {
+    // Background Cleanup Routine (Runs before fetching)
+    try {
+      // 1. Find all image URLs for entries older than 3 days
+      const { rows: oldEntries } = await sql`
+        SELECT image_url 
+        FROM entries 
+        WHERE created_at < NOW() - INTERVAL '3 days' 
+          AND image_url IS NOT NULL;
+      `;
+
+      // 2. Delete those images from Vercel Blob to free up space
+      if (oldEntries.length > 0) {
+        const urlsToDelete = oldEntries.map(row => row.image_url);
+        await del(urlsToDelete);
+      }
+
+      // 3. Delete the rows from Postgres
+      await sql`
+        DELETE FROM entries 
+        WHERE created_at < NOW() - INTERVAL '3 days';
+      `;
+    } catch (cleanupError) {
+      console.error('Failed to run cleanup routine:', cleanupError);
+      // We don't throw here so that fetching entries still works even if cleanup fails
+    }
+
     const { rows } = await sql`
       SELECT id, author, content, image_url, reactions, created_at 
       FROM entries 
