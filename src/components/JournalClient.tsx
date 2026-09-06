@@ -6,7 +6,7 @@ import { SendHorizontal, Loader2, Trash2, Heart, Image as ImageIcon, X } from 'l
 import { clsx } from 'clsx';
 import { isToday, isYesterday, format } from 'date-fns';
 import IdentityPicker from './IdentityPicker';
-import { upload } from '@vercel/blob/client';
+import Image from 'next/image';
 
 interface Entry {
   id: string;
@@ -85,13 +85,19 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
     try {
       if (imageFile) {
         try {
-          const newBlob = await upload(imageFile.name, imageFile, {
-            access: 'public',
-            handleUploadUrl: '/api/upload',
+          const response = await fetch(`/api/upload?filename=${encodeURIComponent(imageFile.name)}`, {
+            method: 'POST',
+            body: imageFile,
           });
-          uploadedImageUrl = newBlob.url;
+          if (!response.ok) {
+             throw new Error("Upload failed. Vercel size limit or token error.");
+          }
+          const blob = await response.json();
+          if (blob.url) {
+            uploadedImageUrl = blob.url;
+          }
         } catch (uploadError: any) {
-          alert(`IMAGE UPLOAD CRASHED!\n\nReason: ${uploadError.message}\n\nIf it says token is missing, Vercel did not link your Blob correctly.`);
+          alert(`UPLOAD CRASHED!\n\nReason: ${uploadError.message}`);
           setIsSending(false);
           return;
         }
