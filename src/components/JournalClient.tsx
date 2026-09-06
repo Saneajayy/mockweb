@@ -90,14 +90,15 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
             body: imageFile,
           });
           if (!response.ok) {
-             throw new Error("Upload failed. Vercel size limit or token error.");
+             const errorText = await response.text();
+             throw new Error(`STATUS: ${response.status}\n\nDETAILS:\n${errorText}`);
           }
           const blob = await response.json();
           if (blob.url) {
             uploadedImageUrl = blob.url;
           }
         } catch (uploadError: any) {
-          alert(`UPLOAD CRASHED!\n\nReason: ${uploadError.message}`);
+          alert(`UPLOAD CRASHED!\n\n${uploadError.message}`);
           setIsSending(false);
           return;
         }
