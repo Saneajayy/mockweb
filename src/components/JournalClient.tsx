@@ -344,7 +344,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-4 py-6 flex flex-col space-y-6">
+      <main className="flex-1 overflow-y-auto px-4 py-6 flex flex-col space-y-4">
         {isLoading && (
           <div className="flex-1 flex items-center justify-center">
             <Loader2 className="w-8 h-8 text-slate-500 animate-spin" />
@@ -362,7 +362,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         )}
 
         {groupedEntries && Object.entries(groupedEntries).map(([dateStr, entries]) => (
-          <div key={dateStr} className="flex flex-col space-y-6">
+          <div key={dateStr} className="flex flex-col space-y-2">
             <div className="flex justify-center my-2">
               <span className="text-xs font-medium text-slate-500 tracking-wide">
                 {dateStr}
