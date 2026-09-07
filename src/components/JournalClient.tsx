@@ -43,6 +43,21 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const profileInputRef = useRef<HTMLInputElement>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleTouchStart = (id: string) => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = setTimeout(() => {
+      setActiveReactionId(prev => prev === id ? null : id);
+      if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(50);
+      }
+    }, 500);
+  };
+
+  const clearTouchTimer = () => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+  };
   
   const { data, error, mutate: mutateEntries, isLoading } = useSWR<{ entries: Entry[] }>('/api/entries', fetcher, {
     refreshInterval: 15000,
@@ -370,11 +385,15 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                   )}
                 >
                   <div 
-                    className="relative cursor-pointer select-none" 
+                    className="relative cursor-pointer select-none touch-manipulation" 
                     onContextMenu={(e) => {
                       e.preventDefault();
                       setActiveReactionId(activeReactionId === entry.id ? null : entry.id);
                     }}
+                    onTouchStart={() => handleTouchStart(entry.id)}
+                    onTouchMove={clearTouchTimer}
+                    onTouchEnd={clearTouchTimer}
+                    onTouchCancel={clearTouchTimer}
                   >
                     {activeReactionId === entry.id && (
                       <div className={clsx(
