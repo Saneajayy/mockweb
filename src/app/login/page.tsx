@@ -77,6 +77,11 @@ export default function LoginPage() {
             {!loading && <ArrowRight className="w-4 h-4" />}
           </button>
         </form>
+
+        <div className="mt-12 text-center flex flex-col items-center space-y-2 opacity-80 animate-in fade-in zoom-in duration-1000 delay-300 fill-mode-both">
+          <p className="text-[13px] text-slate-400 italic font-light">"Our own little corner of the world"</p>
+          <p className="text-[11px] text-slate-500 font-medium tracking-widest uppercase">Thanks for being here &lt;3</p>
+        </div>
       </div>
     </main>
   );
