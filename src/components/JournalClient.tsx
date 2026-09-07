@@ -292,7 +292,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-slate-950 font-sans text-slate-200" onClick={() => activeReactionId && setActiveReactionId(null)}>
+    <div className="flex flex-col h-[100dvh] bg-slate-950 bg-[url('/2224368.png')] bg-cover bg-center bg-fixed sm:bg-none sm:bg-slate-950 font-sans text-slate-200" onClick={() => activeReactionId && setActiveReactionId(null)}>
       
       {/* Top Header */}
       <header className="sticky top-0 z-20 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm">
