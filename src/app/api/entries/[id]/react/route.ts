@@ -19,7 +19,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { author } = body;
+    const { author, emoji } = body;
 
     if (!author) {
       return NextResponse.json({ error: 'Author required to react' }, { status: 400 });
@@ -36,11 +36,11 @@ export async function PATCH(
 
     const currentReactions = entries[0].reactions || {};
     
-    // Toggle reaction (if they already reacted, remove it, otherwise add it)
-    if (currentReactions[author]) {
+    // Toggle reaction (if they already reacted with same emoji, remove it, otherwise add/update it)
+    if (currentReactions[author] === emoji) {
       delete currentReactions[author];
     } else {
-      currentReactions[author] = 'heart';
+      currentReactions[author] = emoji || '❤️';
     }
 
     const { rows } = await sql`

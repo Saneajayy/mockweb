@@ -37,6 +37,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [activeReactionId, setActiveReactionId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -208,7 +209,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
     }
   };
 
-  const handleReact = async (id: string) => {
+  const handleReact = async (id: string, emoji: string) => {
     if (!localAuthor) return;
     
     mutateEntries((prev) => {
@@ -217,10 +218,10 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         entries: prev.entries.map(entry => {
           if (entry.id === id) {
             const currentReactions = { ...(entry.reactions || {}) };
-            if (currentReactions[localAuthor]) {
+            if (currentReactions[localAuthor] === emoji) {
               delete currentReactions[localAuthor];
             } else {
-              currentReactions[localAuthor] = 'heart';
+              currentReactions[localAuthor] = emoji;
             }
             return { ...entry, reactions: currentReactions };
           }
@@ -233,7 +234,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
       await fetch(`/api/entries/${id}/react`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ author: localAuthor }),
+        body: JSON.stringify({ author: localAuthor, emoji }),
       });
       mutateEntries();
     } catch (err) {
@@ -276,7 +277,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-slate-950 font-sans text-slate-200">
+    <div className="flex flex-col h-[100dvh] bg-slate-950 font-sans text-slate-200" onClick={() => activeReactionId && setActiveReactionId(null)}>
       
       {/* Top Header */}
       <header className="sticky top-0 z-20 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm">
@@ -368,51 +369,70 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                     isDeleting && "opacity-50"
                   )}
                 >
-                  <div className={clsx(
-                    "relative group shadow-sm text-[15px] leading-relaxed break-words whitespace-pre-wrap",
-                    isMine 
-                      ? "bg-blue-600 text-white rounded-xl rounded-br-[4px]" 
-                      : "bg-slate-800 text-slate-100 rounded-xl rounded-bl-[4px]",
-                    !entry.content && entry.image_url ? "bg-transparent shadow-none" : ""
-                  )}>
-                    {entry.image_url && (
+                  <div 
+                    className="relative cursor-pointer select-none" 
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setActiveReactionId(activeReactionId === entry.id ? null : entry.id);
+                    }}
+                  >
+                    {activeReactionId === entry.id && (
                       <div className={clsx(
-                        "relative w-full overflow-hidden",
-                        !entry.content ? "rounded-xl" : "rounded-t-xl rounded-b-[4px]"
+                        "absolute -top-12 z-30 bg-slate-800 border border-slate-700 rounded-full px-3 py-2 shadow-xl flex items-center space-x-3 animate-in zoom-in-90 duration-200",
+                        isMine ? "right-0" : "left-0"
                       )}>
-                        <img 
-                          src={entry.image_url} 
-                          alt="Entry image"
-                          className="max-w-full h-auto object-cover max-h-64"
-                        />
+                        {['👍', '❤️', '👎', '🫂'].map(emoji => (
+                          <button
+                            key={emoji}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleReact(entry.id, emoji);
+                              setActiveReactionId(null);
+                            }}
+                            className="text-xl hover:scale-125 transition-transform"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
                       </div>
                     )}
                     
-                    {entry.content && (
-                      <div className="px-4 py-3">
-                        {entry.content}
-                      </div>
-                    )}
+                    <div className={clsx(
+                      "relative group shadow-sm text-[15px] leading-relaxed break-words whitespace-pre-wrap",
+                      isMine 
+                        ? "bg-blue-600 text-white rounded-xl rounded-br-[4px]" 
+                        : "bg-slate-800 text-slate-100 rounded-xl rounded-bl-[4px]",
+                      !entry.content && entry.image_url ? "bg-transparent shadow-none" : ""
+                    )}>
+                      {entry.image_url && (
+                        <div className={clsx(
+                          "relative w-full overflow-hidden",
+                          !entry.content ? "rounded-xl" : "rounded-t-xl rounded-b-[4px]"
+                        )}>
+                          <img 
+                            src={entry.image_url} 
+                            alt="Entry image"
+                            className="max-w-full h-auto object-cover max-h-64"
+                          />
+                        </div>
+                      )}
+                      
+                      {entry.content && (
+                        <div className="px-4 py-3">
+                          {entry.content}
+                        </div>
+                      )}
 
-                    {isMine && !isDeleting && (
-                      <button 
-                        onClick={() => handleDelete(entry.id, entry.author)}
-                        className="absolute -left-10 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-red-400"
-                        title="Delete entry"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                    
-                    {!isMine && (
-                      <button 
-                        onClick={() => handleReact(entry.id)}
-                        className="absolute -right-10 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-blue-400"
-                        title="React"
-                      >
-                        <Heart className={clsx("w-4 h-4", iReacted && "fill-blue-500 text-blue-500")} />
-                      </button>
-                    )}
+                      {isMine && !isDeleting && (
+                        <button 
+                          onClick={() => handleDelete(entry.id, entry.author)}
+                          className="absolute -left-10 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-red-400"
+                          title="Delete entry"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="flex items-center space-x-2 mt-1.5 px-1">
@@ -421,9 +441,9 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                     </span>
                     {hasReactions && (
                       <div className="flex -space-x-1">
-                        {Object.keys(entry.reactions || {}).map((reacter) => (
-                          <div key={reacter} className="bg-slate-900 border border-slate-800 p-0.5 rounded-full shadow-sm" title={reacter}>
-                            <Heart className="w-3 h-3 fill-blue-500 text-blue-500" />
+                        {Object.entries(entry.reactions || {}).map(([reacter, emoji]) => (
+                          <div key={reacter} className="bg-slate-900 border border-slate-800 px-1 py-0.5 rounded-full shadow-sm text-[12px] leading-none" title={reacter}>
+                            {emoji as React.ReactNode}
                           </div>
                         ))}
                       </div>
