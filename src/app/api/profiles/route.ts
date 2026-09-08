@@ -59,6 +59,7 @@ export async function POST(request: Request) {
     const buffer = await request.arrayBuffer();
     const blob = await put(filename, buffer, {
       access: 'public',
+      allowOverwrite: true,
     });
 
     await sql`

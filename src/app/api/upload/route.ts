@@ -28,6 +28,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const buffer = await request.arrayBuffer();
     const blob = await put(filename, buffer, {
       access: 'public',
+      allowOverwrite: true,
     });
 
     return NextResponse.json(blob);
