@@ -25,7 +25,7 @@ interface Profile {
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-const renderContentWithLinks = (text: string) => {
+const renderContentWithLinks = (text: string, isMine: boolean) => {
   if (!text) return null;
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const parts = text.split(urlRegex);
@@ -33,7 +33,17 @@ const renderContentWithLinks = (text: string) => {
   return parts.map((part, i) => {
     if (part.match(urlRegex)) {
       return (
-        <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline break-all" onClick={(e) => e.stopPropagation()}>
+        <a 
+          key={i} 
+          href={part} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className={clsx(
+            "hover:underline break-all",
+            isMine ? "text-white underline font-medium" : "text-blue-400"
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
           {part}
         </a>
       );
@@ -468,7 +478,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                       
                       {entry.content && (
                         <div className="px-4 py-3 whitespace-pre-wrap">
-                          {renderContentWithLinks(entry.content)}
+                          {renderContentWithLinks(entry.content, isMine)}
                         </div>
                       )}
 
