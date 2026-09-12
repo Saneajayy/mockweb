@@ -60,6 +60,11 @@ export async function POST(request: Request) {
 
   try {
     const { author, content, image_url } = await request.json();
+    const authorB = process.env.AUTHOR_B_NAME || 'You';
+
+    if (author !== authorB) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     if (!author || (!content && !image_url)) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });

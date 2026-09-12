@@ -517,6 +517,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         <div ref={bottomRef} className="h-2" />
       </main>
 
+      {localAuthor === authorB && (
       <footer className="bg-transparent px-4 pt-2 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
         {imagePreview && (
           <div className="mb-3 relative inline-block">
@@ -582,6 +583,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
           </button>
         </form>
       </footer>
+      )}
     </div>
   );
 }
