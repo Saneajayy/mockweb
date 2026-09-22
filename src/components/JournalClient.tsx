@@ -7,6 +7,7 @@ import { clsx } from 'clsx';
 import { isToday, isYesterday, format } from 'date-fns';
 import IdentityPicker from './IdentityPicker';
 import Image from 'next/image';
+import Rabbit from './Rabbit';
 
 interface Entry {
   id: string;
@@ -409,7 +410,8 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-slate-950 bg-[url('/2224368.png')] bg-cover bg-center bg-fixed sm:bg-none sm:bg-slate-950 font-sans text-slate-200" onClick={() => activeReactionId && setActiveReactionId(null)}>
+    <div className="flex flex-col h-[100dvh] bg-[url('/grass.jpeg')] bg-cover bg-center bg-fixed font-sans text-slate-200" onClick={() => activeReactionId && setActiveReactionId(null)}>
+      <Rabbit />
       
       {/* Top Header */}
       <header className="sticky top-0 z-20 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm">
@@ -494,7 +496,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         {groupedEntries && Object.entries(groupedEntries).map(([dateStr, entries]) => (
           <div key={dateStr} className="flex flex-col space-y-2">
             <div className="flex justify-center my-2">
-              <span className="text-xs font-medium text-slate-500 tracking-wide">
+              <span className="text-xs font-bold text-black tracking-wide">
                 {dateStr}
               </span>
             </div>
@@ -585,7 +587,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                   </div>
                   
                   <div className="flex items-center space-x-2 mt-1.5 px-1">
-                    <span className="text-[11px] text-slate-500">
+                    <span className="text-[11px] font-semibold text-black drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]">
                       {format(new Date(entry.created_at), 'h:mm a')}
                     </span>
                     {hasReactions && (
