@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import useSWR, { mutate } from 'swr';
-import { SendHorizontal, Loader2, Trash2, Heart, Image as ImageIcon, X, UserCircle, MoreVertical, LogOut } from 'lucide-react';
+import { SendHorizontal, Loader2, Trash2, Heart, Image as ImageIcon, X, UserCircle, MoreVertical, LogOut, Sticker } from 'lucide-react';
 import { clsx } from 'clsx';
 import { isToday, isYesterday, format } from 'date-fns';
 import IdentityPicker from './IdentityPicker';
@@ -66,6 +66,10 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeReactionId, setActiveReactionId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showStickers, setShowStickers] = useState(false);
+  const [giphySearch, setGiphySearch] = useState('');
+  const [stickers, setStickers] = useState<any[]>([]);
+  const [isSearchingStickers, setIsSearchingStickers] = useState(false);
   
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -116,6 +120,47 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
     const interval = setInterval(ping, 30000);
     return () => clearInterval(interval);
   }, [localAuthor]);
+
+  const fetchStickers = async (query: string) => {
+    setIsSearchingStickers(true);
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_GIPHY_API_KEY;
+      if (!apiKey || apiKey === 'dummy_key_replace_me') {
+        // Fallback for dummy key so the user can verify UI
+        setStickers([
+          { id: '1', images: { fixed_height: { url: 'https://media.giphy.com/media/3o7TKSjRrfIPjeiVyM/giphy.gif' } } },
+          { id: '2', images: { fixed_height: { url: 'https://media.giphy.com/media/l41YkxvU8c7J7Bba0/giphy.gif' } } },
+          { id: '3', images: { fixed_height: { url: 'https://media.giphy.com/media/xT0xezQGU5xCDJuCPe/giphy.gif' } } },
+          { id: '4', images: { fixed_height: { url: 'https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif' } } },
+        ]);
+        setIsSearchingStickers(false);
+        return;
+      }
+      const endpoint = query 
+        ? `https://api.giphy.com/v1/stickers/search?api_key=${apiKey}&q=${encodeURIComponent(query)}&limit=20`
+        : `https://api.giphy.com/v1/stickers/trending?api_key=${apiKey}&limit=20`;
+      
+      const res = await fetch(endpoint);
+      const data = await res.json();
+      if (data.data) {
+        setStickers(data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch stickers', err);
+    } finally {
+      setIsSearchingStickers(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showStickers) {
+      const timeout = setTimeout(() => {
+        fetchStickers(giphySearch);
+      }, 500);
+      return () => clearTimeout(timeout);
+    }
+  }, [giphySearch, showStickers]);
+
 
   const handleSelectAuthor = (author: string) => {
     localStorage.setItem('journal_author', author);
@@ -226,6 +271,51 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
       });
 
       if (!res.ok) throw new Error('Failed to send');
+      mutateEntries();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleStickerSelect = async (stickerUrl: string) => {
+    if (!localAuthor || isSending) return;
+    setIsSending(true);
+    setShowStickers(false);
+    
+    const tempId = crypto.randomUUID();
+    const optimisticEntry: Entry = {
+      id: tempId,
+      author: localAuthor,
+      content: '',
+      image_url: stickerUrl,
+      reactions: {},
+      created_at: new Date().toISOString(),
+    };
+
+    mutateEntries(
+      (prev) => {
+        if (!prev) return { entries: [optimisticEntry] };
+        return { entries: [...prev.entries, optimisticEntry] };
+      },
+      false
+    );
+
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+
+    try {
+      const res = await fetch('/api/entries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          author: localAuthor, 
+          content: '',
+          image_url: stickerUrl 
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to send sticker');
       mutateEntries();
     } catch (err) {
       console.error(err);
@@ -518,7 +608,44 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
       </main>
 
       {localAuthor === authorB && (
-      <footer className="bg-transparent px-4 pt-2 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+      <footer className="bg-transparent px-4 pt-2 pb-[calc(1.5rem+env(safe-area-inset-bottom))] relative z-10">
+        {showStickers && (
+          <div className="absolute bottom-full left-4 right-4 mb-2 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-72 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div className="p-2 border-b border-slate-800 bg-slate-900/90 backdrop-blur z-10">
+              <input
+                type="text"
+                placeholder="Search stickers..."
+                value={giphySearch}
+                onChange={(e) => setGiphySearch(e.target.value)}
+                className="w-full bg-slate-800 text-slate-200 text-sm rounded-xl px-3 py-2 outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-slate-500"
+              />
+            </div>
+            <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-700">
+              {isSearchingStickers ? (
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="w-6 h-6 text-slate-500 animate-spin" />
+                </div>
+              ) : stickers.length > 0 ? (
+                <div className="grid grid-cols-4 gap-2">
+                  {stickers.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => handleStickerSelect(s.images.fixed_height.url)}
+                      className="aspect-square rounded-lg overflow-hidden bg-slate-800 hover:opacity-80 transition-opacity flex items-center justify-center group"
+                    >
+                      <img src={s.images.fixed_height.url} alt="Sticker" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full text-slate-500 text-sm">
+                  No stickers found
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {imagePreview && (
           <div className="mb-3 relative inline-block">
             <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-slate-700">
@@ -544,7 +671,18 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
           >
             <ImageIcon className="w-5 h-5" />
           </button>
+          <button
+            type="button"
+            onClick={() => setShowStickers(!showStickers)}
+            className={clsx(
+              "p-2.5 transition-colors",
+              showStickers ? "text-blue-400" : "text-slate-400 hover:text-blue-400"
+            )}
+          >
+            <Sticker className="w-5 h-5" />
+          </button>
           <input 
+
             type="file" 
             ref={fileInputRef} 
             onChange={handleImageSelect} 
