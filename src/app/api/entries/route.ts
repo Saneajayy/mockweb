@@ -17,18 +17,24 @@ export async function GET() {
   try {
     // Background Cleanup Routine (Runs before fetching)
     try {
-      // 1. Find all image URLs for entries older than 10 days
+      // 1. Find all image and audio URLs for entries older than 10 days
       const { rows: oldEntries } = await sql`
-        SELECT image_url 
+        SELECT image_url, audio_url 
         FROM entries 
         WHERE created_at < NOW() - INTERVAL '10 days' 
-          AND image_url IS NOT NULL;
+          AND (image_url IS NOT NULL OR audio_url IS NOT NULL);
       `;
 
-      // 2. Delete those images from Vercel Blob to free up space
+      // 2. Delete those files from Vercel Blob to free up space
       if (oldEntries.length > 0) {
-        const urlsToDelete = oldEntries.map(row => row.image_url);
-        await del(urlsToDelete);
+        const urlsToDelete: string[] = [];
+        oldEntries.forEach(row => {
+          if (row.image_url) urlsToDelete.push(row.image_url);
+          if (row.audio_url) urlsToDelete.push(row.audio_url);
+        });
+        if (urlsToDelete.length > 0) {
+          await del(urlsToDelete);
+        }
       }
 
       // 3. Delete the rows from Postgres
@@ -42,7 +48,7 @@ export async function GET() {
     }
 
     const { rows } = await sql`
-      SELECT id, author, content, image_url, reactions, created_at 
+      SELECT id, author, content, image_url, audio_url, reactions, created_at 
       FROM entries 
       ORDER BY created_at ASC
     `;
@@ -59,21 +65,21 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { author, content, image_url } = await request.json();
+    const { author, content, image_url, audio_url } = await request.json();
     const authorB = process.env.AUTHOR_B_NAME || 'You';
 
     if (author !== authorB) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    if (!author || (!content && !image_url)) {
+    if (!author || (!content && !image_url && !audio_url)) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     }
 
     const { rows } = await sql`
-      INSERT INTO entries (author, content, image_url)
-      VALUES (${author}, ${content || ''}, ${image_url || null})
-      RETURNING id, author, content, image_url, reactions, created_at
+      INSERT INTO entries (author, content, image_url, audio_url)
+      VALUES (${author}, ${content || ''}, ${image_url || null}, ${audio_url || null})
+      RETURNING id, author, content, image_url, audio_url, reactions, created_at
     `;
 
     return NextResponse.json({ entry: rows[0] });

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import useSWR, { mutate } from 'swr';
-import { SendHorizontal, Loader2, Trash2, Heart, Image as ImageIcon, X, UserCircle, MoreVertical, LogOut, Sticker } from 'lucide-react';
+import { SendHorizontal, Loader2, Trash2, Heart, Image as ImageIcon, X, UserCircle, MoreVertical, LogOut, Sticker, Mic, Square } from 'lucide-react';
 import { clsx } from 'clsx';
 import { isToday, isYesterday, format } from 'date-fns';
 import IdentityPicker from './IdentityPicker';
@@ -14,6 +14,7 @@ interface Entry {
   author: string;
   content: string;
   image_url: string | null;
+  audio_url?: string | null;
   reactions: Record<string, string>;
   created_at: string;
 }
@@ -63,6 +64,10 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
   const [content, setContent] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [audioFile, setAudioFile] = useState<Blob | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeReactionId, setActiveReactionId] = useState<string | null>(null);
@@ -208,13 +213,50 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        setAudioFile(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("Error accessing mic:", err);
+      alert("Microphone access denied or not available.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const clearAudio = () => {
+    setAudioFile(null);
+  };
+
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if ((!content.trim() && !imageFile) || !localAuthor || isSending) return;
+    if ((!content.trim() && !imageFile && !audioFile) || !localAuthor || isSending) return;
 
     setIsSending(true);
     const textToSend = content.trim();
     let uploadedImageUrl = null;
+    let uploadedAudioUrl = null;
 
     try {
       if (imageFile) {
@@ -238,12 +280,29 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         }
       }
 
+      if (audioFile) {
+        try {
+          const response = await fetch(`/api/upload?filename=audio-${Date.now()}.webm`, {
+            method: 'POST',
+            body: audioFile,
+          });
+          if (!response.ok) throw new Error('Audio upload failed');
+          const blob = await response.json();
+          uploadedAudioUrl = blob.url;
+        } catch (uploadError: any) {
+          alert(`AUDIO UPLOAD CRASHED!\n\n${uploadError.message}`);
+          setIsSending(false);
+          return;
+        }
+      }
+
       const tempId = crypto.randomUUID();
       const optimisticEntry: Entry = {
         id: tempId,
         author: localAuthor,
         content: textToSend,
         image_url: uploadedImageUrl,
+        audio_url: uploadedAudioUrl,
         reactions: {},
         created_at: new Date().toISOString(),
       };
@@ -258,6 +317,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
 
       setContent('');
       clearImage();
+      clearAudio();
       
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
 
@@ -267,7 +327,8 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         body: JSON.stringify({ 
           author: localAuthor, 
           content: textToSend,
-          image_url: uploadedImageUrl 
+          image_url: uploadedImageUrl,
+          audio_url: uploadedAudioUrl
         }),
       });
 
@@ -568,6 +629,12 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                         </div>
                       )}
                       
+                      {entry.audio_url && (
+                        <div className="px-4 py-2">
+                          <audio controls src={entry.audio_url} className="max-w-full h-10 w-64" />
+                        </div>
+                      )}
+
                       {entry.content && (
                         <div className="px-4 py-3 whitespace-pre-wrap">
                           {renderContentWithLinks(entry.content, isMine)}
@@ -661,6 +728,18 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
             </button>
           </div>
         )}
+
+        {audioFile && (
+          <div className="mb-3 relative inline-block bg-slate-800 p-2 rounded-lg border border-slate-700">
+            <audio controls src={URL.createObjectURL(audioFile)} className="h-10 w-48" />
+            <button 
+              onClick={clearAudio}
+              className="absolute -top-2 -right-2 bg-slate-800 border border-slate-700 text-slate-300 p-1 rounded-full shadow-sm"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        )}
         
         <form 
           onSubmit={handleSend}
@@ -682,6 +761,16 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
             )}
           >
             <Sticker className="w-5 h-5" />
+          </button>
+          <button
+            type="button"
+            onClick={isRecording ? stopRecording : startRecording}
+            className={clsx(
+              "p-2.5 transition-colors",
+              isRecording ? "text-red-500 animate-pulse" : "text-slate-400 hover:text-blue-400"
+            )}
+          >
+            {isRecording ? <Square className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
           </button>
           <input 
 
@@ -707,10 +796,10 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
           />
           <button
             type="submit"
-            disabled={(!content.trim() && !imageFile) || isSending}
+            disabled={(!content.trim() && !imageFile && !audioFile) || isSending}
             className={clsx(
               "p-2.5 flex items-center justify-center transition-all rounded-xl",
-              (content.trim() || imageFile) && !isSending
+              (content.trim() || imageFile || audioFile) && !isSending
                 ? "bg-blue-600 text-white shadow-sm hover:bg-blue-500 active:scale-95" 
                 : "bg-slate-800 text-slate-500 cursor-not-allowed"
             )}
