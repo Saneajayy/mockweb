@@ -215,6 +215,11 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
 
   const startRecording = async () => {
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Audio recording is not supported in this browser. If you're on mobile, ensure you are accessing the site via HTTPS.");
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -225,16 +230,21 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const mimeType = mediaRecorder.mimeType || 'audio/webm';
+        const audioBlob = new Blob(chunksRef.current, { type: mimeType });
         setAudioFile(audioBlob);
         stream.getTracks().forEach(track => track.stop());
       };
 
       mediaRecorder.start();
       setIsRecording(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error accessing mic:", err);
-      alert("Microphone access denied or not available.");
+      if (err.name === 'NotAllowedError') {
+        alert("Microphone access was denied. Please allow microphone access in your browser settings.");
+      } else {
+        alert("Failed to access microphone. Ensure you are on HTTPS and the browser supports it.");
+      }
     }
   };
 
@@ -282,7 +292,8 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
 
       if (audioFile) {
         try {
-          const response = await fetch(`/api/upload?filename=audio-${Date.now()}.webm`, {
+          const extension = audioFile.type.includes('mp4') ? 'mp4' : 'webm';
+          const response = await fetch(`/api/upload?filename=audio-${Date.now()}.${extension}`, {
             method: 'POST',
             body: audioFile,
           });
