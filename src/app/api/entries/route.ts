@@ -17,11 +17,11 @@ export async function GET() {
   try {
     // Background Cleanup Routine (Runs before fetching)
     try {
-      // 1. Find all image URLs for entries older than 3 days
+      // 1. Find all image URLs for entries older than 10 days
       const { rows: oldEntries } = await sql`
         SELECT image_url 
         FROM entries 
-        WHERE created_at < NOW() - INTERVAL '3 days' 
+        WHERE created_at < NOW() - INTERVAL '10 days' 
           AND image_url IS NOT NULL;
       `;
 
@@ -34,7 +34,7 @@ export async function GET() {
       // 3. Delete the rows from Postgres
       await sql`
         DELETE FROM entries 
-        WHERE created_at < NOW() - INTERVAL '3 days';
+        WHERE created_at < NOW() - INTERVAL '10 days';
       `;
     } catch (cleanupError) {
       console.error('Failed to run cleanup routine:', cleanupError);
