@@ -483,7 +483,22 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
 
   return (
     <div className="flex flex-col h-[100dvh] bg-[url('/grass.jpeg')] bg-cover bg-center bg-fixed font-sans text-slate-200" onClick={() => activeReactionId && setActiveReactionId(null)}>
-      <Rabbit />
+      {/* Background Rabbits */}
+      <Rabbit 
+        id="rabbit-left"
+        initialPos={{ x: 28, y: 78 }}
+        initialFacingRight={true}
+        initialDelay={1200}
+        speedMultiplier={1}
+      />
+      <Rabbit 
+        id="rabbit-right"
+        initialPos={{ x: 72, y: 82 }}
+        initialFacingRight={false}
+        initialDelay={2800}
+        speedMultiplier={0.88}
+        sizeClassName="w-36 h-36 min-w-[9rem] min-h-[9rem]"
+      />
       
       {/* Top Header */}
       <header className="sticky top-0 z-20 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm">
