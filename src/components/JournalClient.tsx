@@ -7,7 +7,7 @@ import { clsx } from 'clsx';
 import { isToday, isYesterday, format } from 'date-fns';
 import IdentityPicker from './IdentityPicker';
 import Image from 'next/image';
-import { FairyLights, DiyaIcon, DiwaliCanvas } from './DiwaliEffects';
+import { DiwaliCanvas } from './DiwaliEffects';
 
 interface Entry {
   id: string;
@@ -490,10 +490,6 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
       {/* Ambient floating golden sparkles & celebratory fireworks canvas */}
       <DiwaliCanvas triggerFirework={fireworkTrigger} />
 
-      {/* Hanging festive fairy lights along top */}
-      <div className="sticky top-0 z-30 pointer-events-none overflow-visible">
-        <FairyLights />
-      </div>
       
       {/* Top Header */}
       <header className="sticky top-0 z-20 bg-slate-950/85 backdrop-blur-md border-b border-amber-500/25 px-4 py-2.5 flex items-center justify-between shadow-[0_4px_20px_rgba(245,158,11,0.1)]">
