@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import useSWR, { mutate } from 'swr';
-import { SendHorizontal, Loader2, Trash2, Heart, Image as ImageIcon, X, UserCircle, MoreVertical, LogOut, Sticker, Mic, Square } from 'lucide-react';
+import { SendHorizontal, Loader2, Trash2, Heart, Image as ImageIcon, X, UserCircle, MoreVertical, LogOut, Sticker, Mic, Square, Sparkles } from 'lucide-react';
 import { clsx } from 'clsx';
 import { isToday, isYesterday, format } from 'date-fns';
 import IdentityPicker from './IdentityPicker';
 import Image from 'next/image';
-import Rabbit from './Rabbit';
+import { FairyLights, DiyaIcon, DiwaliCanvas } from './DiwaliEffects';
 
 interface Entry {
   id: string;
@@ -42,7 +42,7 @@ const renderContentWithLinks = (text: string, isMine: boolean) => {
           rel="noopener noreferrer" 
           className={clsx(
             "hover:underline break-all",
-            isMine ? "text-white underline font-medium" : "text-blue-400"
+            isMine ? "text-amber-100 underline font-semibold" : "text-amber-400 font-medium"
           )}
           onClick={(e) => e.stopPropagation()}
         >
@@ -76,6 +76,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
   const [giphySearch, setGiphySearch] = useState('');
   const [stickers, setStickers] = useState<any[]>([]);
   const [isSearchingStickers, setIsSearchingStickers] = useState(false);
+  const [fireworkTrigger, setFireworkTrigger] = useState(0);
   
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -345,6 +346,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
 
       if (!res.ok) throw new Error('Failed to send');
       mutateEntries();
+      setFireworkTrigger((prev) => prev + 1);
     } catch (err) {
       console.error(err);
     } finally {
@@ -390,6 +392,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
 
       if (!res.ok) throw new Error('Failed to send sticker');
       mutateEntries();
+      setFireworkTrigger((prev) => prev + 1);
     } catch (err) {
       console.error(err);
     } finally {
@@ -482,78 +485,73 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[url('/grass.jpeg')] bg-cover bg-center bg-fixed font-sans text-slate-200" onClick={() => activeReactionId && setActiveReactionId(null)}>
-      {/* Background Rabbits */}
-      <Rabbit 
-        id="rabbit-left"
-        initialPos={{ x: 28, y: 78 }}
-        initialFacingRight={true}
-        initialDelay={1200}
-        speedMultiplier={1}
-      />
-      <Rabbit 
-        id="rabbit-right"
-        initialPos={{ x: 72, y: 82 }}
-        initialFacingRight={false}
-        initialDelay={2800}
-        speedMultiplier={0.88}
-        sizeClassName="w-36 h-36 min-w-[9rem] min-h-[9rem]"
-      />
+    <div className="flex flex-col h-[100dvh] relative overflow-hidden bg-slate-950 font-sans text-amber-100" onClick={() => activeReactionId && setActiveReactionId(null)}>
+
+      {/* Ambient floating golden sparkles & celebratory fireworks canvas */}
+      <DiwaliCanvas triggerFirework={fireworkTrigger} />
+
+      {/* Hanging festive fairy lights along top */}
+      <div className="sticky top-0 z-30 pointer-events-none overflow-visible">
+        <FairyLights />
+      </div>
       
       {/* Top Header */}
-      <header className="sticky top-0 z-20 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-sm">
+      <header className="sticky top-0 z-20 bg-slate-950/85 backdrop-blur-md border-b border-amber-500/25 px-4 py-2.5 flex items-center justify-between shadow-[0_4px_20px_rgba(245,158,11,0.1)]">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-900 ring-2 ring-amber-400/60 shadow-[0_0_12px_rgba(245,158,11,0.35)] flex items-center justify-center">
             {partnerProfile?.profile_image_url ? (
               <img src={partnerProfile.profile_image_url} alt={partnerName} className="w-full h-full object-cover" />
             ) : (
-              <UserCircle className="w-6 h-6 text-slate-500" />
+              <UserCircle className="w-6 h-6 text-amber-400" />
             )}
           </div>
           <div className="flex flex-col">
-            <span className="font-medium text-slate-100 leading-tight">{partnerName}</span>
-            <span className={clsx("text-[11px] font-medium", partnerStatus === 'Online' ? "text-emerald-400" : "text-slate-400")}>
+            <span className="font-semibold text-amber-100 leading-tight flex items-center gap-1.5">
+              {partnerName}
+            </span>
+            <span className={clsx("text-[11px] font-medium", partnerStatus === 'Online' ? "text-emerald-400 font-semibold" : "text-amber-200/60")}>
               {partnerStatus}
             </span>
           </div>
         </div>
 
+
         <div className="relative">
-          <button onClick={() => setShowSettings(!showSettings)} className="p-2 text-slate-400 hover:text-slate-200">
+          <button onClick={() => setShowSettings(!showSettings)} className="p-2 text-amber-300/80 hover:text-amber-100 transition-colors">
             <MoreVertical className="w-5 h-5" />
           </button>
           
           {showSettings && (
-            <div className="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-800 rounded-xl shadow-xl overflow-hidden py-1 z-30">
-              <div className="px-4 py-3 border-b border-slate-800 flex items-center space-x-3 mb-1">
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-800 shrink-0 flex items-center justify-center">
+            <div className="absolute right-0 mt-2 w-64 bg-slate-950/95 border border-amber-500/35 rounded-2xl shadow-[0_0_35px_rgba(245,158,11,0.2)] backdrop-blur-xl overflow-hidden py-1 z-30">
+              <div className="px-4 py-3 border-b border-amber-500/20 flex items-center space-x-3 mb-1">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-900 ring-2 ring-amber-400/50 shrink-0 flex items-center justify-center">
                   {selfProfile?.profile_image_url ? (
                     <img src={selfProfile.profile_image_url} alt="Your profile" className="w-full h-full object-cover" />
                   ) : (
-                    <UserCircle className="w-6 h-6 text-slate-500" />
+                    <UserCircle className="w-6 h-6 text-amber-400" />
                   )}
                 </div>
                 <div className="flex flex-col overflow-hidden">
-                  <span className="text-sm font-medium text-slate-200 truncate">{localAuthor}</span>
-                  <span className="text-xs text-slate-400 truncate">Your Profile</span>
+                  <span className="text-sm font-semibold text-amber-100 truncate">{localAuthor}</span>
+                  <span className="text-xs text-amber-300/60 truncate">Your Profile</span>
                 </div>
               </div>
               <input type="file" ref={profileInputRef} onChange={handleProfileSelect} accept="image/*" className="hidden" />
               <button 
                 onClick={() => profileInputRef.current?.click()}
-                className="w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-800 flex items-center space-x-3 whitespace-nowrap transition-colors"
+                className="w-full px-4 py-2.5 text-left text-sm text-amber-100 hover:bg-amber-500/15 flex items-center space-x-3 whitespace-nowrap transition-colors"
               >
-                <UserCircle className="w-4 h-4 text-slate-400" />
+                <UserCircle className="w-4 h-4 text-amber-400" />
                 <span>Change profile picture</span>
               </button>
-              <div className="h-px bg-slate-800 my-1 mx-2"></div>
+              <div className="h-px bg-amber-500/20 my-1 mx-2"></div>
               <button 
                 onClick={() => {
                   localStorage.removeItem('journal_author');
                   setLocalAuthor(null);
                   setShowSettings(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-slate-800 flex items-center space-x-3 whitespace-nowrap transition-colors"
+                className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-red-500/10 flex items-center space-x-3 whitespace-nowrap transition-colors"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Switch Profile</span>
@@ -582,10 +580,12 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
 
         {groupedEntries && Object.entries(groupedEntries).map(([dateStr, entries]) => (
           <div key={dateStr} className="flex flex-col space-y-2">
-            <div className="flex justify-center my-2">
-              <span className="text-xs font-bold text-black tracking-wide">
-                {dateStr}
-              </span>
+            <div className="flex justify-center my-3">
+              <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-slate-950/80 border border-amber-500/35 text-amber-200 text-xs font-semibold backdrop-blur-md shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                <span className="text-amber-400 text-[10px]">✨</span>
+                <span>{dateStr}</span>
+                <span className="text-amber-400 text-[10px]">✨</span>
+              </div>
             </div>
 
             {entries.map((entry) => {
@@ -616,18 +616,19 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                   >
                     {activeReactionId === entry.id && (
                       <div className={clsx(
-                        "absolute -top-12 z-30 bg-slate-800 border border-slate-700 rounded-full px-3 py-2 shadow-xl flex items-center space-x-3 animate-in zoom-in-90 duration-200",
+                        "absolute -top-12 z-30 bg-slate-950/95 border border-amber-500/40 rounded-full px-3 py-1.5 shadow-[0_0_20px_rgba(245,158,11,0.3)] backdrop-blur-md flex items-center space-x-2.5 animate-in zoom-in-90 duration-200",
                         isMine ? "right-0" : "left-0"
                       )}>
-                        {['👍', '❤️', '👎', '🫂'].map(emoji => (
+                        {['🪔', '✨', '❤️', '🎉', '🌸', '🤗'].map(emoji => (
                           <button
                             key={emoji}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleReact(entry.id, emoji);
                               setActiveReactionId(null);
+                              setFireworkTrigger((prev) => prev + 1);
                             }}
-                            className="text-xl hover:scale-125 transition-transform"
+                            className="text-xl hover:scale-130 transition-transform active:scale-95"
                           >
                             {emoji}
                           </button>
@@ -638,14 +639,14 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                     <div className={clsx(
                       "relative group shadow-sm text-[15px] leading-relaxed break-words whitespace-pre-wrap",
                       isMine 
-                        ? "bg-blue-600 text-white rounded-xl rounded-br-[4px]" 
-                        : "bg-slate-800 text-slate-100 rounded-xl rounded-bl-[4px]",
-                      !entry.content && entry.image_url ? "bg-transparent shadow-none" : ""
+                        ? "bg-gradient-to-br from-amber-600 via-orange-600 to-amber-700 text-white rounded-2xl rounded-br-[4px] border border-amber-400/40 shadow-[0_4px_20px_rgba(245,158,11,0.25)]" 
+                        : "bg-slate-950/85 backdrop-blur-md text-amber-50 rounded-2xl rounded-bl-[4px] border border-amber-500/25 shadow-[0_4px_20px_rgba(0,0,0,0.5)]",
+                      !entry.content && entry.image_url ? "bg-transparent shadow-none border-none" : ""
                     )}>
                       {entry.image_url && (
                         <div className={clsx(
                           "relative w-full overflow-hidden",
-                          !entry.content ? "rounded-xl" : "rounded-t-xl rounded-b-[4px]"
+                          !entry.content ? "rounded-2xl" : "rounded-t-2xl rounded-b-[4px]"
                         )}>
                           <img 
                             src={entry.image_url} 
@@ -670,7 +671,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                       {isMine && !isDeleting && (
                         <button 
                           onClick={() => handleDelete(entry.id, entry.author)}
-                          className="absolute -left-10 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-red-400"
+                          className="absolute -left-10 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 transition-opacity text-amber-400/60 hover:text-red-400"
                           title="Delete entry"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -680,13 +681,13 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                   </div>
                   
                   <div className="flex items-center space-x-2 mt-1.5 px-1">
-                    <span className="text-[11px] font-semibold text-black drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]">
+                    <span className="text-[11px] font-medium text-amber-200/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
                       {format(new Date(entry.created_at), 'h:mm a')}
                     </span>
                     {hasReactions && (
                       <div className="flex -space-x-1">
                         {Object.entries(entry.reactions || {}).map(([reacter, emoji]) => (
-                          <div key={reacter} className="bg-slate-900 border border-slate-800 px-1 py-0.5 rounded-full shadow-sm text-[12px] leading-none" title={reacter}>
+                          <div key={reacter} className="bg-slate-950/95 border border-amber-500/40 px-1.5 py-0.5 rounded-full shadow-sm text-[12px] leading-none" title={reacter}>
                             {emoji as React.ReactNode}
                           </div>
                         ))}
@@ -702,23 +703,22 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         <div ref={bottomRef} className="h-2" />
       </main>
 
-      {localAuthor === authorB && (
-      <footer className="bg-transparent px-4 pt-2 pb-[calc(1.5rem+env(safe-area-inset-bottom))] relative z-10">
+      <footer className="bg-transparent px-4 pt-2 pb-[calc(1.5rem+env(safe-area-inset-bottom))] relative z-20">
         {showStickers && (
-          <div className="absolute bottom-full left-4 right-4 mb-2 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-72 animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <div className="p-2 border-b border-slate-800 bg-slate-900/90 backdrop-blur z-10">
+          <div className="absolute bottom-full left-4 right-4 mb-2 bg-slate-950/95 border border-amber-500/35 rounded-3xl shadow-[0_0_35px_rgba(245,158,11,0.25)] backdrop-blur-xl overflow-hidden flex flex-col h-72 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div className="p-2 border-b border-amber-500/20 bg-slate-950/90 backdrop-blur z-10">
               <input
                 type="text"
-                placeholder="Search stickers..."
+                placeholder="Search festive stickers..."
                 value={giphySearch}
                 onChange={(e) => setGiphySearch(e.target.value)}
-                className="w-full bg-slate-800 text-slate-200 text-sm rounded-xl px-3 py-2 outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-slate-500"
+                className="w-full bg-slate-900/90 text-amber-100 text-sm rounded-xl px-3 py-2 outline-none border border-amber-500/30 focus:border-amber-400 placeholder:text-amber-200/40"
               />
             </div>
-            <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-700">
+            <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-amber-500/30">
               {isSearchingStickers ? (
                 <div className="flex items-center justify-center h-full">
-                  <Loader2 className="w-6 h-6 text-slate-500 animate-spin" />
+                  <Loader2 className="w-6 h-6 text-amber-400 animate-spin" />
                 </div>
               ) : stickers.length > 0 ? (
                 <div className="grid grid-cols-4 gap-2">
@@ -726,14 +726,14 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                     <button
                       key={s.id}
                       onClick={() => handleStickerSelect(s.images.fixed_height.url)}
-                      className="aspect-square rounded-lg overflow-hidden bg-slate-800 hover:opacity-80 transition-opacity flex items-center justify-center group"
+                      className="aspect-square rounded-xl overflow-hidden bg-slate-900 border border-amber-500/20 hover:border-amber-400 hover:scale-105 transition-all flex items-center justify-center group"
                     >
-                      <img src={s.images.fixed_height.url} alt="Sticker" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      <img src={s.images.fixed_height.url} alt="Sticker" className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-full text-slate-500 text-sm">
+                <div className="flex items-center justify-center h-full text-amber-200/50 text-sm">
                   No stickers found
                 </div>
               )}
@@ -743,12 +743,12 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
 
         {imagePreview && (
           <div className="mb-3 relative inline-block">
-            <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-slate-700">
+            <div className="relative w-24 h-24 rounded-2xl overflow-hidden border border-amber-500/40 shadow-lg">
               <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
             </div>
             <button 
               onClick={clearImage}
-              className="absolute -top-2 -right-2 bg-slate-800 border border-slate-700 text-slate-300 p-1 rounded-full shadow-sm"
+              className="absolute -top-2 -right-2 bg-slate-900 border border-amber-500/40 text-amber-300 p-1 rounded-full shadow-sm hover:text-white"
             >
               <X className="w-3 h-3" />
             </button>
@@ -756,11 +756,11 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         )}
 
         {audioFile && (
-          <div className="mb-3 relative inline-block bg-slate-800 p-2 rounded-lg border border-slate-700">
+          <div className="mb-3 relative inline-block bg-slate-950/90 p-2.5 rounded-2xl border border-amber-500/40 shadow-lg">
             <audio controls src={URL.createObjectURL(audioFile)} className="h-10 w-48" />
             <button 
               onClick={clearAudio}
-              className="absolute -top-2 -right-2 bg-slate-800 border border-slate-700 text-slate-300 p-1 rounded-full shadow-sm"
+              className="absolute -top-2 -right-2 bg-slate-900 border border-amber-500/40 text-amber-300 p-1 rounded-full shadow-sm hover:text-white"
             >
               <X className="w-3 h-3" />
             </button>
@@ -769,12 +769,13 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         
         <form 
           onSubmit={handleSend}
-          className="flex items-end space-x-2 bg-slate-900 p-1.5 focus-within:ring-1 focus-within:ring-blue-900 focus-within:bg-slate-800 transition-all border border-slate-700 shadow-xl rounded-3xl"
+          className="flex items-end space-x-2 bg-slate-950/85 backdrop-blur-xl p-1.5 border border-amber-500/35 focus-within:border-amber-400 focus-within:shadow-[0_0_30px_rgba(245,158,11,0.25)] transition-all shadow-[0_0_25px_rgba(245,158,11,0.12)] rounded-3xl"
         >
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="p-2.5 text-slate-400 hover:text-blue-400 transition-colors"
+            className="p-2.5 text-amber-400/80 hover:text-amber-300 hover:bg-amber-500/10 rounded-full transition-colors"
+            title="Upload photo"
           >
             <ImageIcon className="w-5 h-5" />
           </button>
@@ -782,9 +783,10 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
             type="button"
             onClick={() => setShowStickers(!showStickers)}
             className={clsx(
-              "p-2.5 transition-colors",
-              showStickers ? "text-blue-400" : "text-slate-400 hover:text-blue-400"
+              "p-2.5 rounded-full transition-colors",
+              showStickers ? "text-amber-300 bg-amber-500/20" : "text-amber-400/80 hover:text-amber-300 hover:bg-amber-500/10"
             )}
+            title="Stickers"
           >
             <Sticker className="w-5 h-5" />
           </button>
@@ -792,14 +794,14 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
             type="button"
             onClick={isRecording ? stopRecording : startRecording}
             className={clsx(
-              "p-2.5 transition-colors",
-              isRecording ? "text-red-500 animate-pulse" : "text-slate-400 hover:text-blue-400"
+              "p-2.5 rounded-full transition-colors",
+              isRecording ? "text-red-400 animate-pulse bg-red-500/20" : "text-amber-400/80 hover:text-amber-300 hover:bg-amber-500/10"
             )}
+            title={isRecording ? "Stop recording" : "Record voice note"}
           >
             {isRecording ? <Square className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
           </button>
           <input 
-
             type="file" 
             ref={fileInputRef} 
             onChange={handleImageSelect} 
@@ -816,29 +818,29 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                 handleSend();
               }
             }}
-            placeholder="Message..."
-            className="flex-1 max-h-32 bg-transparent resize-none outline-none text-[15px] text-slate-100 px-2 py-2.5 leading-relaxed placeholder:text-slate-600"
+            placeholder="Send a message..."
+            className="flex-1 max-h-32 bg-transparent resize-none outline-none text-[15px] text-amber-50 px-2 py-2.5 leading-relaxed placeholder:text-amber-200/35"
             rows={Math.min(4, content.split('\n').length || 1)}
           />
           <button
             type="submit"
             disabled={(!content.trim() && !imageFile && !audioFile) || isSending}
             className={clsx(
-              "p-2.5 flex items-center justify-center transition-all rounded-xl",
+              "p-2.5 flex items-center justify-center transition-all rounded-2xl",
               (content.trim() || imageFile || audioFile) && !isSending
-                ? "bg-blue-600 text-white shadow-sm hover:bg-blue-500 active:scale-95" 
-                : "bg-slate-800 text-slate-500 cursor-not-allowed"
+                ? "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:via-orange-400 hover:to-amber-500 text-slate-950 shadow-md shadow-amber-500/30 active:scale-95" 
+                : "bg-slate-900 text-amber-500/30 cursor-not-allowed"
             )}
+            title="Send message"
           >
             {isSending ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="w-5 h-5 animate-spin text-slate-950" />
             ) : (
               <SendHorizontal className="w-5 h-5 -ml-0.5" />
             )}
           </button>
         </form>
       </footer>
-      )}
     </div>
   );
 }

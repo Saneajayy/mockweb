@@ -14,7 +14,7 @@ async function initProfilesTable() {
     CREATE TABLE IF NOT EXISTS profiles (
       id VARCHAR(50) PRIMARY KEY,
       profile_image_url TEXT,
-      last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      last_seen TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
   `;
 }

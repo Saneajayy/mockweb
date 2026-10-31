@@ -13,17 +13,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Our Journal",
-  description: "A private space for just the two of us.",
+  title: "Our Journal • Happy Diwali ✨",
+  description: "A private festive space for just the two of us. Shubh Deepavali!",
   appleWebApp: {
     title: "Our Journal",
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     capable: true,
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#fafaf9",
+  themeColor: "#0b0517",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,

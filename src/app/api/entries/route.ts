@@ -95,9 +95,10 @@ export async function POST(request: Request) {
 
   try {
     const { author, content, image_url, audio_url } = await request.json();
+    const authorA = process.env.AUTHOR_A_NAME || 'Me';
     const authorB = process.env.AUTHOR_B_NAME || 'You';
 
-    if (author !== authorB) {
+    if (author !== authorA && author !== authorB) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

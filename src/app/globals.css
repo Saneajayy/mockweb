@@ -31,3 +31,48 @@
 .rabbit-hopping {
   animation: rabbit-hop 0.35s ease-in-out infinite;
 }
+
+@keyframes flame-flicker {
+  0%, 100% {
+    transform: scale(1) rotate(-1.5deg);
+  }
+  25% {
+    transform: scale(1.08, 0.94) rotate(1.8deg);
+  }
+  50% {
+    transform: scale(0.94, 1.06) rotate(-0.8deg);
+  }
+  75% {
+    transform: scale(1.05, 1.01) rotate(1.2deg);
+  }
+}
+
+.animate-flame {
+  animation: flame-flicker 1.6s ease-in-out infinite;
+  transform-origin: 32px 34px;
+}
+
+@keyframes fairy-shimmer {
+  0% {
+    opacity: 0.95;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.45;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes golden-pulse {
+  0%, 100% {
+    box-shadow: 0 0 15px 2px rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px 6px rgba(245, 158, 11, 0.6);
+  }
+}
+
+.golden-glow {
+  animation: golden-pulse 3s ease-in-out infinite;
+}
+
