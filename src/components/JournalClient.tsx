@@ -699,6 +699,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         <div ref={bottomRef} className="h-2" />
       </main>
 
+      {localAuthor === authorB && (
       <footer className="bg-transparent px-4 pt-2 pb-[calc(1.5rem+env(safe-area-inset-bottom))] relative z-20">
         {showStickers && (
           <div className="absolute bottom-full left-4 right-4 mb-2 bg-slate-950/95 border border-amber-500/35 rounded-3xl shadow-[0_0_35px_rgba(245,158,11,0.25)] backdrop-blur-xl overflow-hidden flex flex-col h-72 animate-in fade-in slide-in-from-bottom-2 duration-200">
@@ -837,6 +838,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
           </button>
         </form>
       </footer>
+      )}
     </div>
   );
 }
