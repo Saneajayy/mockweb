@@ -24,17 +24,17 @@ function isVercelBlobUrl(url?: string | null): boolean {
 
 /**
  * Strict auto-delete routine:
- * 1. Finds all entries older than 5 days.
+ * 1. Finds all entries older than 30 days.
  * 2. Deletes associated files from Vercel Blob (safely filtering out Giphy / external URLs).
  * 3. Permanently deletes the expired rows from Postgres (even if blob deletion errors or credentials are unset).
  */
 async function cleanupOldEntries() {
   try {
-    // 1. Find all image and audio URLs for entries older than 5 days
+    // 1. Find all image and audio URLs for entries older than 30 days
     const { rows: oldEntries } = await sql`
       SELECT image_url, audio_url 
       FROM entries 
-      WHERE created_at < NOW() - INTERVAL '5 days' 
+      WHERE created_at < NOW() - INTERVAL '30 days' 
         AND (image_url IS NOT NULL OR audio_url IS NOT NULL);
     `;
 
@@ -58,7 +58,7 @@ async function cleanupOldEntries() {
     // 3. Delete the rows from Postgres
     await sql`
       DELETE FROM entries 
-      WHERE created_at < NOW() - INTERVAL '5 days';
+      WHERE created_at < NOW() - INTERVAL '30 days';
     `;
   } catch (cleanupError) {
     console.error('Failed to run auto-delete routine:', cleanupError);
@@ -74,11 +74,11 @@ export async function GET() {
     // Run cleanup routine before fetching
     await cleanupOldEntries();
 
-    // Strict 5-day filter directly in SELECT to ensure no expired messages are served
+    // Strict 30-day filter directly in SELECT to ensure no expired messages are served
     const { rows } = await sql`
       SELECT id, author, content, image_url, audio_url, reactions, created_at 
       FROM entries 
-      WHERE created_at >= NOW() - INTERVAL '5 days'
+      WHERE created_at >= NOW() - INTERVAL '30 days'
       ORDER BY created_at ASC
     `;
     return NextResponse.json({ entries: rows });
