@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     }
 
     if (password === sitePassword) {
-      // Set the session cookie
+      // Set session cookie (destroyed when browser session ends)
       const cookieStore = await cookies();
       cookieStore.set({
         name: 'journal_session',
@@ -24,7 +24,6 @@ export async function POST(request: Request) {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 365, // 1 year
         path: '/',
       });
 

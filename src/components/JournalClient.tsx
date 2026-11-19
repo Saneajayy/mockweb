@@ -108,7 +108,11 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
   const profiles = profilesData?.profiles || {};
 
   useEffect(() => {
-    const saved = localStorage.getItem('journal_author');
+    try {
+      localStorage.removeItem('journal_author');
+    } catch {}
+
+    const saved = sessionStorage.getItem('journal_author');
     if (saved === authorA || saved === authorB) {
       setLocalAuthor(saved);
     }
@@ -170,7 +174,9 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
 
 
   const handleSelectAuthor = (author: string) => {
-    localStorage.setItem('journal_author', author);
+    try {
+      sessionStorage.setItem('journal_author', author);
+    } catch {}
     setLocalAuthor(author);
   };
 
@@ -543,14 +549,31 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
               <div className="h-px bg-amber-500/20 my-1 mx-2"></div>
               <button 
                 onClick={() => {
-                  localStorage.removeItem('journal_author');
+                  try {
+                    sessionStorage.removeItem('journal_author');
+                    localStorage.removeItem('journal_author');
+                  } catch {}
                   setLocalAuthor(null);
                   setShowSettings(false);
+                }}
+                className="w-full px-4 py-2.5 text-left text-sm text-amber-100 hover:bg-amber-500/15 flex items-center space-x-3 whitespace-nowrap transition-colors"
+              >
+                <UserCircle className="w-4 h-4 text-amber-400" />
+                <span>Switch profile</span>
+              </button>
+              <button 
+                onClick={async () => {
+                  try {
+                    sessionStorage.removeItem('journal_author');
+                    localStorage.removeItem('journal_author');
+                    await fetch('/api/logout', { method: 'POST' });
+                  } catch {}
+                  window.location.href = '/login';
                 }}
                 className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-red-500/10 flex items-center space-x-3 whitespace-nowrap transition-colors"
               >
                 <LogOut className="w-4 h-4" />
-                <span>Switch Profile</span>
+                <span>Log out</span>
               </button>
             </div>
           )}
