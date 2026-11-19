@@ -25,6 +25,6 @@ export const config = {
      * - favicon.ico, manifest.webmanifest, manifest.json (public files)
      * - icons (if any)
      */
-    '/((?!api/login|login|_next/static|_next/image|favicon.ico|manifest.webmanifest|manifest.json|icon-*|apple-touch-icon.*).*)',
+    '/((?!api/login|login|_next/static|_next/image|favicon.ico|manifest.webmanifest|manifest.json|icon-.*|apple-touch-icon.*|.*\\.(?:svg|png|jpg|jpeg|gif|webp|json|ico)).*)',
   ],
 };

@@ -2,9 +2,13 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { FairyLights, DiyaIcon, DiwaliCanvas } from '@/components/DiwaliEffects';
+import SnowMound from '@/components/SnowMound';
+import ChristmasTree from '@/components/ChristmasTree';
+import SecondChristmasTree from '@/components/SecondChristmasTree';
+import ChristmasHouse from '@/components/ChristmasHouse';
+import WinterSky from '@/components/WinterSky';
 
 export default function LoginPage() {
   const [password, setPassword] = useState('');
@@ -33,7 +37,7 @@ export default function LoginPage() {
         setError(true);
         setPassword('');
       }
-    } catch (err) {
+    } catch {
       setError(true);
     } finally {
       setLoading(false);
@@ -41,76 +45,87 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-[100dvh] relative flex flex-col items-center justify-center p-6 overflow-hidden bg-slate-950">
+    <main
+      className="min-h-[100dvh] relative flex flex-col items-center justify-start pt-12 sm:pt-16 p-6 overflow-hidden"
+      style={{
+        background:
+          'linear-gradient(in oklab 180deg, #001259 0%, #001259 35%, #001156 40%, #00104e 45%, #000d42 50%, #000a34 55%, #000825 60%, #000517 65%, #00020b 70%, #000103 75%, #000000 80%, #000000 100%)',
+      }}
+    >
+      {/* Dynamic Winter Sky: Realistic gentle snowfall & pinpoint twinkling stars */}
+      <WinterSky className="absolute inset-0 z-0 pointer-events-none" />
 
-      {/* Hanging festive fairy lights at top */}
-      <div className="absolute top-0 left-0 right-0 z-20 pointer-events-none overflow-visible">
-        <FairyLights />
-      </div>
+      {/* Background Christmas Tree (Behind house) */}
+      <SecondChristmasTree
+        className="absolute bottom-[16%] right-[9%] w-[170px] h-[170px] md:bottom-[15%] md:right-[160px] md:w-[300px] md:h-[300px] z-[1]"
+      />
 
-      {/* Floating golden stardust sparkles */}
-      <DiwaliCanvas />
+      {/* Christmas House (Behind all 3 snow mounds, on right most side) */}
+      <ChristmasHouse
+        className="absolute bottom-[15%] right-[-16%] w-[210px] h-[210px] md:bottom-[14%] md:right-[-40px] md:w-[380px] md:h-[380px] z-[2]"
+      />
 
-      <div className="w-full max-w-sm relative z-20 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
-        {/* Diwali Card */}
-        <div className="w-full bg-slate-950/90 backdrop-blur-xl border border-amber-500/40 rounded-3xl p-7 shadow-2xl flex flex-col items-center">
-          {/* Diya Header Graphic */}
-          <div className="mb-4 relative">
-            <DiyaIcon className="w-16 h-16" glowing={true} />
-          </div>
+      {/* 3rd Snow Mound (Furthest back, shifted left, expanded right) */}
+      <SnowMound
+        flipHorizontal={true}
+        className="absolute bottom-[-4%] left-[-20%] w-[115%] md:w-[135%] h-[34%] z-[3]"
+      />
 
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold tracking-wide">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Shubh Deepavali</span>
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            </div>
-          </div>
+      {/* 2nd Snow Mound (Middle, shifted up and right) */}
+      <SnowMound
+        flipHorizontal={true}
+        className="absolute bottom-[1%] left-[28%] w-[120%] h-[42%] z-[5] -rotate-[24deg] origin-bottom-right"
+      />
 
-          <form onSubmit={handleSubmit} className="w-full flex flex-col space-y-4">
-            <div className="relative">
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  if (error) setError(false);
-                }}
-                placeholder="Enter something"
-                className={clsx(
-                  "w-full px-5 py-3.5 text-center bg-slate-900/90 border outline-none transition-all text-amber-100 font-sans rounded-2xl",
-                  "focus:border-amber-400 focus:ring-0 placeholder:text-amber-200/30",
-                  error 
-                    ? "border-red-500 bg-red-950/40 text-red-200 animate-pulse" 
-                    : "border-amber-500/40"
-                )}
-                disabled={loading}
-                autoFocus
-              />
-            </div>
+      {/* Christmas Tree (Middle of 1st snow mound, on top of it) */}
+      <ChristmasTree
+        className="absolute bottom-[2%] left-[32%] -translate-x-1/2 w-[380px] h-[380px] sm:w-[500px] sm:h-[500px] z-20"
+      />
 
-            <button
-              type="submit"
-              disabled={loading || !password}
-              className={clsx(
-                "w-full flex items-center justify-center space-x-2 py-3.5 font-sans font-semibold tracking-wide transition-all rounded-2xl",
-                "shadow-lg active:scale-[0.98]",
-                loading || !password 
-                  ? "bg-slate-800 text-slate-500 cursor-not-allowed shadow-none" 
-                  : "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:via-orange-400 hover:to-amber-500 text-slate-950 shadow-amber-500/25 hover:shadow-amber-500/40"
-              )}
-            >
-              <span>{loading ? 'Unlocking...' : 'Enter Journal'}</span>
-              {!loading && <ArrowRight className="w-4 h-4 ml-1" />}
-            </button>
-          </form>
+      {/* 1st Snow Mound (Foreground) */}
+      <SnowMound className="absolute bottom-0 left-0 right-0 w-full h-[21%] z-10" />
 
-          <div className="mt-6 text-center">
-            <p className="text-[11px] text-amber-300/50 font-medium tracking-widest uppercase">
-              May your days be filled with light &lt;3
-            </p>
-          </div>
-        </div>
+      <div className="w-full max-w-[280px] sm:max-w-[300px] relative z-20 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
+        <form
+          onSubmit={handleSubmit}
+          className={clsx(
+            "w-full flex items-center bg-[#001259] rounded-lg border transition-all p-1.5 pl-3.5",
+            error
+              ? "border-red-500/80 ring-1 ring-red-500/40 animate-pulse"
+              : "border-white/80 focus-within:border-white focus-within:ring-1 focus-within:ring-white/40"
+          )}
+        >
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (error) setError(false);
+            }}
+            placeholder="Come home, Its cold outside."
+            className="flex-1 bg-transparent border-none outline-none text-white text-sm placeholder:text-white/40 pr-2 min-w-0"
+            disabled={loading}
+            autoFocus
+          />
+
+          <button
+            type="submit"
+            disabled={loading || !password}
+            aria-label="Unlock"
+            className={clsx(
+              "flex-shrink-0 w-8 h-8 rounded-md bg-white text-black flex items-center justify-center transition-all",
+              loading || !password
+                ? "cursor-not-allowed"
+                : "hover:bg-neutral-100 active:scale-95 shadow-sm"
+            )}
+          >
+            {loading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-black" strokeWidth={1.5} />
+            ) : (
+              <ArrowRight className="w-3.5 h-3.5 text-black" strokeWidth={1.5} />
+            )}
+          </button>
+        </form>
       </div>
     </main>
   );
