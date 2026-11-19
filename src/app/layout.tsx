@@ -13,10 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Our Journal • Happy Diwali ✨",
-  description: "A private festive space for just the two of us. Shubh Deepavali!",
+  title: "Winter home ❄️",
   appleWebApp: {
-    title: "Our Journal",
+    title: "Winter home",
     statusBarStyle: "black-translucent",
     capable: true,
   },
