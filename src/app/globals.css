@@ -76,3 +76,28 @@
   animation: golden-pulse 3s ease-in-out infinite;
 }
 
+@keyframes fire-glow-pulse {
+  0%, 100% {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(0.88);
+  }
+  35% {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(1.12);
+  }
+  65% {
+    opacity: 0.72;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+  85% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+}
+
+.fire-glow {
+  animation: fire-glow-pulse 2.8s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+

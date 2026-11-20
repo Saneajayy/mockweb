@@ -22,6 +22,9 @@ interface Snowflake {
   swingSpeed: number;
   swingOffset: number;
   alpha: number;
+  isCrystal: boolean;
+  rotation: number;
+  rotSpeed: number;
 }
 
 interface ShootingStar {
@@ -38,9 +41,17 @@ interface ShootingStar {
 export default function WinterSky({
   className = '',
   snowOnly = false,
+  flakeCount,
+  starCount,
+  sizeScale = 1,
+  speedScale = 1,
 }: {
   className?: string;
   snowOnly?: boolean;
+  flakeCount?: number;
+  starCount?: number;
+  sizeScale?: number;
+  speedScale?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -62,8 +73,9 @@ export default function WinterSky({
       const skyHeight = h * 0.72;
       const count = Math.floor((w * skyHeight) / 6500);
       const starColors = ['#FFFFFF', '#FFFFFF', '#F0F9FF', '#E0F2FE', '#FFFEEA'];
+      const targetCount = starCount !== undefined ? starCount : Math.max(40, Math.min(count, 130));
 
-      stars = Array.from({ length: Math.max(40, Math.min(count, 130)) }, () => {
+      stars = Array.from({ length: targetCount }, () => {
         const isBright = Math.random() < 0.12;
         return {
           x: Math.random() * w,
@@ -82,7 +94,8 @@ export default function WinterSky({
     let flakes: Snowflake[] = [];
     const initFlakes = (w: number, h: number) => {
       const count = Math.floor((w * h) / 14000);
-      flakes = Array.from({ length: Math.max(50, Math.min(count, 110)) }, () => {
+      const targetCount = flakeCount !== undefined ? flakeCount : Math.max(50, Math.min(count, 110));
+      flakes = Array.from({ length: targetCount }, () => {
         const depth = Math.random();
         let radius: number;
         let speedY: number;
@@ -109,16 +122,20 @@ export default function WinterSky({
           swingAmp = 1.2 + Math.random() * 1.6;
         }
 
+        const isCrystal = Math.random() < 0.35;
         return {
           x: Math.random() * w,
           y: Math.random() * h,
-          radius,
-          speedY,
-          speedX: (Math.random() - 0.5) * 0.15,
-          swingAmp,
+          radius: radius * sizeScale,
+          speedY: speedY * speedScale,
+          speedX: (Math.random() - 0.5) * 0.15 * speedScale,
+          swingAmp: swingAmp * Math.min(sizeScale, 1.5),
           swingSpeed: 0.008 + Math.random() * 0.015,
           swingOffset: Math.random() * Math.PI * 2,
           alpha,
+          isCrystal,
+          rotation: Math.random() * Math.PI * 2,
+          rotSpeed: (Math.random() - 0.5) * 0.016,
         };
       });
     };
@@ -146,7 +163,7 @@ export default function WinterSky({
         y: startY,
         vx: Math.cos(rad) * speed,
         vy: Math.sin(rad) * speed,
-        tailLength: 70 + Math.random() * 60,
+        tailLength: Math.min(width * 0.45, 70 + Math.random() * 60),
         width: 0.8 + Math.random() * 0.4, // Thin razor point (0.8px - 1.2px)
         life: maxLife,
         maxLife,
@@ -273,6 +290,8 @@ export default function WinterSky({
           flake.speedX +
           Math.sin(time * flake.swingSpeed + flake.swingOffset) * (flake.swingAmp * 0.04);
 
+        flake.rotation += flake.rotSpeed;
+
         if (flake.y > height + 8) {
           flake.y = -8;
           flake.x = Math.random() * width;
@@ -283,13 +302,54 @@ export default function WinterSky({
           flake.x = width + 8;
         }
 
-        ctx.save();
-        ctx.fillStyle = '#FFFFFF';
-        ctx.globalAlpha = flake.alpha;
-        ctx.beginPath();
-        ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        if (flake.isCrystal && flake.radius >= 1.6) {
+          // Render detailed 6-point crystal snowflake with delicate branches
+          ctx.save();
+          ctx.translate(flake.x, flake.y);
+          ctx.rotate(flake.rotation);
+          ctx.strokeStyle = '#FFFFFF';
+          ctx.lineWidth = Math.max(0.65, flake.radius * 0.18);
+          ctx.lineCap = 'round';
+          ctx.globalAlpha = Math.min(1, flake.alpha * 1.15);
+
+          const r = flake.radius * 1.35;
+          for (let b = 0; b < 6; b++) {
+            // Main radial arm
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, r);
+            ctx.stroke();
+
+            // Branching v-tips
+            const branchPos = r * 0.55;
+            const branchLen = r * 0.35;
+            ctx.beginPath();
+            ctx.moveTo(0, branchPos);
+            ctx.lineTo(-branchLen * 0.65, branchPos - branchLen * 0.45);
+            ctx.moveTo(0, branchPos);
+            ctx.lineTo(branchLen * 0.65, branchPos - branchLen * 0.45);
+            ctx.stroke();
+
+            ctx.rotate(Math.PI / 3);
+          }
+
+          // Center delicate core dot
+          ctx.fillStyle = '#FFFFFF';
+          ctx.beginPath();
+          ctx.arc(0, 0, Math.max(0.5, flake.radius * 0.2), 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.restore();
+        } else {
+          // Standard circular snow puff particle
+          ctx.save();
+          ctx.fillStyle = '#FFFFFF';
+          ctx.globalAlpha = flake.alpha;
+          ctx.beginPath();
+          ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
       }
 
       animationFrameId = requestAnimationFrame(render);
@@ -301,7 +361,7 @@ export default function WinterSky({
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [snowOnly]);
+  }, [snowOnly, flakeCount, starCount, sizeScale, speedScale]);
 
   return (
     <canvas

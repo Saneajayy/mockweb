@@ -7,7 +7,9 @@ import { clsx } from 'clsx';
 import { isToday, isYesterday, format } from 'date-fns';
 import IdentityPicker from './IdentityPicker';
 import Image from 'next/image';
-import { DiwaliCanvas } from './DiwaliEffects';
+import RoomFloor from './RoomFloor';
+import Fireplace from './Fireplace';
+import RoomWindow from './RoomWindow';
 
 interface Entry {
   id: string;
@@ -491,27 +493,38 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] relative overflow-hidden bg-slate-950 font-sans text-amber-100" onClick={() => activeReactionId && setActiveReactionId(null)}>
+    <div className="flex flex-col h-[100dvh] relative overflow-hidden bg-[#16382b] font-sans text-amber-100" onClick={() => activeReactionId && setActiveReactionId(null)}>
 
-      {/* Ambient floating golden sparkles & celebratory fireworks canvas */}
-      <DiwaliCanvas triggerFirework={fireworkTrigger} />
+      {/* ── Room Scene Background (Isolated in z-0 stacking context) ── */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none" aria-hidden="true">
+        {/* Enlarged sharp window on the right wall with only left 75% visible (25% cropped off right edge) */}
+        <RoomWindow className="absolute right-0 translate-x-[25%] top-[185px] sm:top-[210px] md:top-[235px] w-[230px] sm:w-[300px] md:w-[370px] h-[245px] sm:h-[315px] md:h-[375px] z-0" />
+
+        {/* Wooden floor at the bottom */}
+        <RoomFloor className="z-[1]" />
+
+        {/* Animated Fireplace & Glow resting ON TOP of the floor on the right */}
+        <div className="absolute top-0 bottom-0 right-0 sm:right-2 w-[44%] min-w-[180px] max-w-[420px] z-[2]">
+          <Fireplace className="absolute left-1/2 -translate-x-1/2 -bottom-[38px] sm:-bottom-[50px] w-[370px] h-[370px] sm:w-[450px] sm:h-[450px]" />
+        </div>
+      </div>
 
       
-      {/* Top Header */}
-      <header className="sticky top-0 z-20 bg-slate-950/85 backdrop-blur-md border-b border-amber-500/25 px-4 py-2.5 flex items-center justify-between shadow-[0_4px_20px_rgba(245,158,11,0.1)]">
+      {/* Top Header / Profile Bar - Light Frosted Glass */}
+      <header className="sticky top-0 z-30 bg-white/[0.04] backdrop-blur-sm border-b border-white/10 px-4 py-3 flex items-center justify-between shadow-[0_2px_12px_rgba(0,0,0,0.08)]">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-900 ring-2 ring-amber-400/60 shadow-[0_0_12px_rgba(245,158,11,0.35)] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-white/40 shadow-[0_2px_12px_rgba(0,0,0,0.25)] flex items-center justify-center shrink-0">
             {partnerProfile?.profile_image_url ? (
               <img src={partnerProfile.profile_image_url} alt={partnerName} className="w-full h-full object-cover" />
             ) : (
-              <UserCircle className="w-6 h-6 text-amber-400" />
+              <UserCircle className="w-6 h-6 text-white/90" />
             )}
           </div>
           <div className="flex flex-col">
-            <span className="font-semibold text-amber-100 leading-tight flex items-center gap-1.5">
+            <span className="font-semibold text-white leading-tight flex items-center gap-1.5 drop-shadow-sm">
               {partnerName}
             </span>
-            <span className={clsx("text-[11px] font-medium", partnerStatus === 'Online' ? "text-emerald-400 font-semibold" : "text-amber-200/60")}>
+            <span className={clsx("text-[11px] font-medium", partnerStatus === 'Online' ? "text-emerald-300 font-semibold drop-shadow-sm" : "text-white/70")}>
               {partnerStatus}
             </span>
           </div>
@@ -519,34 +532,38 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
 
 
         <div className="relative">
-          <button onClick={() => setShowSettings(!showSettings)} className="p-2 text-amber-300/80 hover:text-amber-100 transition-colors">
+          <button 
+            onClick={() => setShowSettings(!showSettings)} 
+            className="p-2 rounded-full text-white/80 hover:text-white hover:bg-white/10 active:scale-95 transition-all"
+            aria-label="Settings"
+          >
             <MoreVertical className="w-5 h-5" />
           </button>
           
           {showSettings && (
-            <div className="absolute right-0 mt-2 w-64 bg-slate-950/95 border border-amber-500/35 rounded-2xl shadow-[0_0_35px_rgba(245,158,11,0.2)] backdrop-blur-xl overflow-hidden py-1 z-30">
-              <div className="px-4 py-3 border-b border-amber-500/20 flex items-center space-x-3 mb-1">
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-900 ring-2 ring-amber-400/50 shrink-0 flex items-center justify-center">
+            <div className="absolute right-0 mt-2 w-64 bg-[#0e291e]/85 border border-white/20 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.4)] backdrop-blur-2xl overflow-hidden py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
+              <div className="px-4 py-3 border-b border-white/10 flex items-center space-x-3 mb-1 bg-white/[0.03]">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-white/10 ring-2 ring-white/30 shrink-0 flex items-center justify-center">
                   {selfProfile?.profile_image_url ? (
                     <img src={selfProfile.profile_image_url} alt="Your profile" className="w-full h-full object-cover" />
                   ) : (
-                    <UserCircle className="w-6 h-6 text-amber-400" />
+                    <UserCircle className="w-6 h-6 text-white/80" />
                   )}
                 </div>
                 <div className="flex flex-col overflow-hidden">
-                  <span className="text-sm font-semibold text-amber-100 truncate">{localAuthor}</span>
-                  <span className="text-xs text-amber-300/60 truncate">Your Profile</span>
+                  <span className="text-sm font-semibold text-white truncate">{localAuthor}</span>
+                  <span className="text-xs text-white/60 truncate">Your Profile</span>
                 </div>
               </div>
               <input type="file" ref={profileInputRef} onChange={handleProfileSelect} accept="image/*" className="hidden" />
               <button 
                 onClick={() => profileInputRef.current?.click()}
-                className="w-full px-4 py-2.5 text-left text-sm text-amber-100 hover:bg-amber-500/15 flex items-center space-x-3 whitespace-nowrap transition-colors"
+                className="w-full px-4 py-2.5 text-left text-sm text-white/90 hover:bg-white/10 flex items-center space-x-3 whitespace-nowrap transition-colors"
               >
-                <UserCircle className="w-4 h-4 text-amber-400" />
+                <UserCircle className="w-4 h-4 text-white/70" />
                 <span>Change profile picture</span>
               </button>
-              <div className="h-px bg-amber-500/20 my-1 mx-2"></div>
+              <div className="h-px bg-white/10 my-1 mx-2"></div>
               <button 
                 onClick={() => {
                   try {
@@ -556,9 +573,9 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                   setLocalAuthor(null);
                   setShowSettings(false);
                 }}
-                className="w-full px-4 py-2.5 text-left text-sm text-amber-100 hover:bg-amber-500/15 flex items-center space-x-3 whitespace-nowrap transition-colors"
+                className="w-full px-4 py-2.5 text-left text-sm text-white/90 hover:bg-white/10 flex items-center space-x-3 whitespace-nowrap transition-colors"
               >
-                <UserCircle className="w-4 h-4 text-amber-400" />
+                <UserCircle className="w-4 h-4 text-white/70" />
                 <span>Switch profile</span>
               </button>
               <button 
@@ -570,7 +587,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                   } catch {}
                   window.location.href = '/login';
                 }}
-                className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-red-500/10 flex items-center space-x-3 whitespace-nowrap transition-colors"
+                className="w-full px-4 py-2.5 text-left text-sm text-red-300 hover:bg-red-500/15 flex items-center space-x-3 whitespace-nowrap transition-colors"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Log out</span>
@@ -580,7 +597,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-4 py-6 flex flex-col space-y-4">
+      <main className="flex-1 overflow-y-auto px-4 pt-4 pb-[300px] sm:pb-[340px] flex flex-col space-y-4 relative z-10">
         {isLoading && (
           <div className="flex-1 flex items-center justify-center">
             <Loader2 className="w-8 h-8 text-slate-500 animate-spin" />
@@ -719,26 +736,26 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
           </div>
         ))}
         
-        <div ref={bottomRef} className="h-2" />
+        <div ref={bottomRef} className="h-16 shrink-0" />
       </main>
 
       {localAuthor === authorB && (
-      <footer className="bg-transparent px-4 pt-2 pb-[calc(1.5rem+env(safe-area-inset-bottom))] relative z-20">
+      <footer className="bg-transparent px-4 pb-[calc(0.85rem+env(safe-area-inset-bottom))] pt-1 relative z-30 w-full flex flex-col items-center">
         {showStickers && (
-          <div className="absolute bottom-full left-4 right-4 mb-2 bg-slate-950/95 border border-amber-500/35 rounded-3xl shadow-[0_0_35px_rgba(245,158,11,0.25)] backdrop-blur-xl overflow-hidden flex flex-col h-72 animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <div className="p-2 border-b border-amber-500/20 bg-slate-950/90 backdrop-blur z-10">
+          <div className="absolute bottom-full mb-2 w-full max-w-[340px] bg-[#0e291e]/92 border border-white/20 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.4)] backdrop-blur-2xl overflow-hidden flex flex-col h-72 animate-in fade-in slide-in-from-bottom-2 duration-200 z-30">
+            <div className="p-2 border-b border-white/10 bg-white/[0.04]">
               <input
                 type="text"
                 placeholder="Search festive stickers..."
                 value={giphySearch}
                 onChange={(e) => setGiphySearch(e.target.value)}
-                className="w-full bg-slate-900/90 text-amber-100 text-sm rounded-xl px-3 py-2 outline-none border border-amber-500/30 focus:border-amber-400 placeholder:text-amber-200/40"
+                className="w-full bg-white/10 text-white text-sm rounded-xl px-3 py-2 outline-none border border-white/15 focus:border-white/40 placeholder:text-white/40"
               />
             </div>
-            <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-amber-500/30">
+            <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-white/20">
               {isSearchingStickers ? (
                 <div className="flex items-center justify-center h-full">
-                  <Loader2 className="w-6 h-6 text-amber-400 animate-spin" />
+                  <Loader2 className="w-6 h-6 text-white/80 animate-spin" />
                 </div>
               ) : stickers.length > 0 ? (
                 <div className="grid grid-cols-4 gap-2">
@@ -746,14 +763,14 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                     <button
                       key={s.id}
                       onClick={() => handleStickerSelect(s.images.fixed_height.url)}
-                      className="aspect-square rounded-xl overflow-hidden bg-slate-900 border border-amber-500/20 hover:border-amber-400 hover:scale-105 transition-all flex items-center justify-center group"
+                      className="aspect-square rounded-xl overflow-hidden bg-white/5 border border-white/10 hover:border-white/40 hover:scale-105 transition-all flex items-center justify-center group"
                     >
                       <img src={s.images.fixed_height.url} alt="Sticker" className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-full text-amber-200/50 text-sm">
+                <div className="flex items-center justify-center h-full text-white/50 text-sm">
                   No stickers found
                 </div>
               )}
@@ -762,13 +779,13 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         )}
 
         {imagePreview && (
-          <div className="mb-3 relative inline-block">
-            <div className="relative w-24 h-24 rounded-2xl overflow-hidden border border-amber-500/40 shadow-lg">
+          <div className="mb-2 relative inline-block">
+            <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-white/40 shadow-lg">
               <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
             </div>
             <button 
               onClick={clearImage}
-              className="absolute -top-2 -right-2 bg-slate-900 border border-amber-500/40 text-amber-300 p-1 rounded-full shadow-sm hover:text-white"
+              className="absolute -top-2 -right-2 bg-slate-900 border border-white/60 text-white p-1 rounded-full shadow-sm hover:bg-slate-800"
             >
               <X className="w-3 h-3" />
             </button>
@@ -776,50 +793,51 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         )}
 
         {audioFile && (
-          <div className="mb-3 relative inline-block bg-slate-950/90 p-2.5 rounded-2xl border border-amber-500/40 shadow-lg">
-            <audio controls src={URL.createObjectURL(audioFile)} className="h-10 w-48" />
+          <div className="mb-2 relative inline-block bg-white/10 backdrop-blur-md p-2 rounded-xl border border-white/30 shadow-lg">
+            <audio controls src={URL.createObjectURL(audioFile)} className="h-8 w-44" />
             <button 
               onClick={clearAudio}
-              className="absolute -top-2 -right-2 bg-slate-900 border border-amber-500/40 text-amber-300 p-1 rounded-full shadow-sm hover:text-white"
+              className="absolute -top-2 -right-2 bg-slate-900 border border-white/60 text-white p-1 rounded-full shadow-sm hover:bg-slate-800"
             >
               <X className="w-3 h-3" />
             </button>
           </div>
         )}
         
+        {/* Compact, glassy message input bar with rounded-lg matching login page */}
         <form 
           onSubmit={handleSend}
-          className="flex items-end space-x-2 bg-slate-950/85 backdrop-blur-xl p-1.5 border border-amber-500/35 focus-within:border-amber-400 focus-within:shadow-[0_0_30px_rgba(245,158,11,0.25)] transition-all shadow-[0_0_25px_rgba(245,158,11,0.12)] rounded-3xl"
+          className="w-full max-w-[310px] sm:max-w-[340px] flex items-center space-x-1 bg-white/[0.08] backdrop-blur-xl border border-white p-1.5 pl-2 rounded-lg shadow-[0_4px_24px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.2)] transition-all focus-within:shadow-[0_0_20px_rgba(255,255,255,0.35)]"
         >
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="p-2.5 text-amber-400/80 hover:text-amber-300 hover:bg-amber-500/10 rounded-full transition-colors"
+            className="p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors shrink-0"
             title="Upload photo"
           >
-            <ImageIcon className="w-5 h-5" />
+            <ImageIcon className="w-4 h-4" />
           </button>
           <button
             type="button"
             onClick={() => setShowStickers(!showStickers)}
             className={clsx(
-              "p-2.5 rounded-full transition-colors",
-              showStickers ? "text-amber-300 bg-amber-500/20" : "text-amber-400/80 hover:text-amber-300 hover:bg-amber-500/10"
+              "p-1.5 rounded transition-colors shrink-0",
+              showStickers ? "text-white bg-white/20" : "text-white/70 hover:text-white hover:bg-white/10"
             )}
             title="Stickers"
           >
-            <Sticker className="w-5 h-5" />
+            <Sticker className="w-4 h-4" />
           </button>
           <button
             type="button"
             onClick={isRecording ? stopRecording : startRecording}
             className={clsx(
-              "p-2.5 rounded-full transition-colors",
-              isRecording ? "text-red-400 animate-pulse bg-red-500/20" : "text-amber-400/80 hover:text-amber-300 hover:bg-amber-500/10"
+              "p-1.5 rounded transition-colors shrink-0",
+              isRecording ? "text-red-400 animate-pulse bg-red-500/20" : "text-white/70 hover:text-white hover:bg-white/10"
             )}
             title={isRecording ? "Stop recording" : "Record voice note"}
           >
-            {isRecording ? <Square className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+            {isRecording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
           </button>
           <input 
             type="file" 
@@ -829,34 +847,34 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
             className="hidden" 
           />
 
-          <textarea
+          <input
+            type="text"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === 'Enter') {
                 e.preventDefault();
                 handleSend();
               }
             }}
             placeholder="Send a message..."
-            className="flex-1 max-h-32 bg-transparent resize-none outline-none text-[15px] text-amber-50 px-2 py-2.5 leading-relaxed placeholder:text-amber-200/35"
-            rows={Math.min(4, content.split('\n').length || 1)}
+            className="flex-1 min-w-0 bg-transparent outline-none text-[13px] text-white px-2 py-1 placeholder:text-white/45"
           />
           <button
             type="submit"
             disabled={(!content.trim() && !imageFile && !audioFile) || isSending}
             className={clsx(
-              "p-2.5 flex items-center justify-center transition-all rounded-2xl",
+              "w-7 h-7 sm:w-8 sm:h-8 rounded flex items-center justify-center shrink-0 transition-all",
               (content.trim() || imageFile || audioFile) && !isSending
-                ? "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:via-orange-400 hover:to-amber-500 text-slate-950 shadow-md shadow-amber-500/30 active:scale-95" 
-                : "bg-slate-900 text-amber-500/30 cursor-not-allowed"
+                ? "bg-white text-slate-900 shadow-sm active:scale-95 hover:bg-white/90" 
+                : "bg-white/10 text-white/30 cursor-not-allowed"
             )}
             title="Send message"
           >
             {isSending ? (
-              <Loader2 className="w-5 h-5 animate-spin text-slate-950" />
+              <Loader2 className="w-4 h-4 animate-spin text-white" />
             ) : (
-              <SendHorizontal className="w-5 h-5 -ml-0.5" />
+              <SendHorizontal className="w-4 h-4" />
             )}
           </button>
         </form>
