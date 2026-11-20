@@ -2,14 +2,13 @@
 
 import { useState, useEffect, useRef } from 'react';
 import useSWR, { mutate } from 'swr';
-import { SendHorizontal, Loader2, Trash2, Heart, Image as ImageIcon, X, UserCircle, MoreVertical, LogOut, Sticker, Mic, Square, Sparkles } from 'lucide-react';
+import { SendHorizontal, Loader2, Trash2, Heart, Image as ImageIcon, X, UserCircle, MoreVertical, LogOut, Sticker, Mic, Square, Sparkles, Volume2, VolumeX } from 'lucide-react';
 import { clsx } from 'clsx';
 import { isToday, isYesterday, format } from 'date-fns';
 import IdentityPicker from './IdentityPicker';
 import Image from 'next/image';
 import RoomFloor from './RoomFloor';
 import Fireplace from './Fireplace';
-import RoomWindow from './RoomWindow';
 
 interface Entry {
   id: string;
@@ -44,7 +43,7 @@ const renderContentWithLinks = (text: string, isMine: boolean) => {
           rel="noopener noreferrer" 
           className={clsx(
             "hover:underline break-all",
-            isMine ? "text-amber-100 underline font-semibold" : "text-amber-400 font-medium"
+            isMine ? "text-amber-200 underline font-semibold" : "text-emerald-200 underline font-semibold"
           )}
           onClick={(e) => e.stopPropagation()}
         >
@@ -78,12 +77,75 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
   const [giphySearch, setGiphySearch] = useState('');
   const [stickers, setStickers] = useState<any[]>([]);
   const [isSearchingStickers, setIsSearchingStickers] = useState(false);
-  const [fireworkTrigger, setFireworkTrigger] = useState(0);
+  const [isPlayingMusic, setIsPlayingMusic] = useState(false);
   
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const profileInputRef = useRef<HTMLInputElement>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const musicRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const audio = new Audio('/music.mp3');
+    audio.loop = true;
+    audio.volume = 0.35;
+    musicRef.current = audio;
+
+    let savedState = 'false';
+    try {
+      savedState = localStorage.getItem('journal_music_playing') || 'false';
+    } catch {}
+
+    if (savedState === 'true') {
+      audio.play().then(() => {
+        setIsPlayingMusic(true);
+      }).catch(() => {
+        // Autoplay may be restricted by the browser until first user gesture
+        setIsPlayingMusic(false);
+      });
+    }
+
+    const handleFirstGesture = () => {
+      let isEnabled = false;
+      try {
+        isEnabled = localStorage.getItem('journal_music_playing') === 'true';
+      } catch {}
+
+      if (isEnabled && musicRef.current?.paused) {
+        musicRef.current.play().then(() => setIsPlayingMusic(true)).catch(() => {});
+      }
+    };
+
+    window.addEventListener('click', handleFirstGesture, { once: true });
+    window.addEventListener('touchstart', handleFirstGesture, { once: true });
+
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+      window.removeEventListener('click', handleFirstGesture);
+      window.removeEventListener('touchstart', handleFirstGesture);
+    };
+  }, []);
+
+  const toggleMusic = () => {
+    if (!musicRef.current) return;
+    if (isPlayingMusic) {
+      musicRef.current.pause();
+      setIsPlayingMusic(false);
+      try {
+        localStorage.setItem('journal_music_playing', 'false');
+      } catch {}
+    } else {
+      musicRef.current.play().then(() => {
+        setIsPlayingMusic(true);
+        try {
+          localStorage.setItem('journal_music_playing', 'true');
+        } catch {}
+      }).catch((err) => {
+        console.error('Audio playback failed:', err);
+      });
+    }
+  };
 
   const handleTouchStart = (id: string) => {
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
@@ -354,7 +416,6 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
 
       if (!res.ok) throw new Error('Failed to send');
       mutateEntries();
-      setFireworkTrigger((prev) => prev + 1);
     } catch (err) {
       console.error(err);
     } finally {
@@ -400,7 +461,6 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
 
       if (!res.ok) throw new Error('Failed to send sticker');
       mutateEntries();
-      setFireworkTrigger((prev) => prev + 1);
     } catch (err) {
       console.error(err);
     } finally {
@@ -493,13 +553,10 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
   }
 
   return (
-    <div className="flex flex-col h-[100dvh] relative overflow-hidden bg-[#16382b] font-sans text-amber-100" onClick={() => activeReactionId && setActiveReactionId(null)}>
+    <div className="flex flex-col h-[100dvh] relative overflow-hidden bg-[#16382b] font-sans text-white/95" onClick={() => activeReactionId && setActiveReactionId(null)}>
 
       {/* ── Room Scene Background (Isolated in z-0 stacking context) ── */}
       <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none" aria-hidden="true">
-        {/* Enlarged sharp window on the right wall with only left 75% visible (25% cropped off right edge) */}
-        <RoomWindow className="absolute right-0 translate-x-[25%] top-[185px] sm:top-[210px] md:top-[235px] w-[230px] sm:w-[300px] md:w-[370px] h-[245px] sm:h-[315px] md:h-[375px] z-0" />
-
         {/* Wooden floor at the bottom */}
         <RoomFloor className="z-[1]" />
 
@@ -531,14 +588,29 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         </div>
 
 
-        <div className="relative">
-          <button 
-            onClick={() => setShowSettings(!showSettings)} 
-            className="p-2 rounded-full text-white/80 hover:text-white hover:bg-white/10 active:scale-95 transition-all"
-            aria-label="Settings"
+        <div className="flex items-center space-x-1 sm:space-x-2">
+          {/* Simple Music Mute/Unmute */}
+          <button
+            onClick={toggleMusic}
+            className="p-1.5 text-white/80 hover:text-white active:scale-95 transition-all flex items-center justify-center"
+            title={isPlayingMusic ? "Mute" : "Unmute"}
+            aria-label={isPlayingMusic ? "Mute" : "Unmute"}
           >
-            <MoreVertical className="w-5 h-5" />
+            {isPlayingMusic ? (
+              <Volume2 className="w-5 h-5 text-white/90 hover:text-white" />
+            ) : (
+              <VolumeX className="w-5 h-5 text-white/50 hover:text-white/80" />
+            )}
           </button>
+
+          <div className="relative">
+            <button 
+              onClick={() => setShowSettings(!showSettings)} 
+              className="p-2 rounded-full text-white/80 hover:text-white hover:bg-white/10 active:scale-95 transition-all"
+              aria-label="Settings"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </button>
           
           {showSettings && (
             <div className="absolute right-0 mt-2 w-64 bg-[#0e291e]/85 border border-white/20 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.4)] backdrop-blur-2xl overflow-hidden py-1 z-30 animate-in fade-in zoom-in-95 duration-150">
@@ -594,10 +666,14 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
               </button>
             </div>
           )}
+          </div>
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-4 pt-4 pb-[300px] sm:pb-[340px] flex flex-col space-y-4 relative z-10">
+      <main className={clsx(
+        "flex-1 overflow-y-auto px-4 pt-4 flex flex-col space-y-4 relative z-10",
+        localAuthor === authorB ? "pb-6 sm:pb-7" : "pb-[90px] sm:pb-[100px]"
+      )}>
         {isLoading && (
           <div className="flex-1 flex items-center justify-center">
             <Loader2 className="w-8 h-8 text-slate-500 animate-spin" />
@@ -609,18 +685,22 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         )}
 
         {!isLoading && !data?.entries?.length && (
-          <div className="flex-1 flex items-center justify-center opacity-60">
-            <p className="text-slate-500 text-sm">no messages here yet.</p>
+          <div className="flex-1 flex items-center justify-center opacity-75">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.08] backdrop-blur-md border border-white/15 text-white/70 text-xs tracking-wide shadow-sm">
+              <span>❄️</span>
+              <span>Leave a warm note by the fire...</span>
+              <span>☕</span>
+            </div>
           </div>
         )}
 
         {groupedEntries && Object.entries(groupedEntries).map(([dateStr, entries]) => (
           <div key={dateStr} className="flex flex-col space-y-2">
             <div className="flex justify-center my-3">
-              <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-slate-950/80 border border-amber-500/35 text-amber-200 text-xs font-semibold backdrop-blur-md shadow-[0_0_15px_rgba(245,158,11,0.2)]">
-                <span className="text-amber-400 text-[10px]">✨</span>
+              <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-white/[0.08] border border-white/15 text-white/85 text-xs font-medium backdrop-blur-md shadow-[0_2px_12px_rgba(0,0,0,0.18)]">
+                <span className="text-white/45 text-[10px]">❄</span>
                 <span>{dateStr}</span>
-                <span className="text-amber-400 text-[10px]">✨</span>
+                <span className="text-white/45 text-[10px]">❄</span>
               </div>
             </div>
 
@@ -652,17 +732,16 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                   >
                     {activeReactionId === entry.id && (
                       <div className={clsx(
-                        "absolute -top-12 z-30 bg-slate-950/95 border border-amber-500/40 rounded-full px-3 py-1.5 shadow-[0_0_20px_rgba(245,158,11,0.3)] backdrop-blur-md flex items-center space-x-2.5 animate-in zoom-in-90 duration-200",
+                        "absolute -top-12 z-30 bg-[#0e291e]/90 border border-white/20 rounded-full px-3 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl flex items-center space-x-2.5 animate-in zoom-in-90 duration-200",
                         isMine ? "right-0" : "left-0"
                       )}>
-                        {['🪔', '✨', '❤️', '🎉', '🌸', '🤗'].map(emoji => (
+                        {['❤️', '❄️', '☕', '🔥', '✨', '🧸'].map(emoji => (
                           <button
                             key={emoji}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleReact(entry.id, emoji);
                               setActiveReactionId(null);
-                              setFireworkTrigger((prev) => prev + 1);
                             }}
                             className="text-xl hover:scale-130 transition-transform active:scale-95"
                           >
@@ -675,9 +754,9 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                     <div className={clsx(
                       "relative group shadow-sm text-[15px] leading-relaxed break-words whitespace-pre-wrap",
                       isMine 
-                        ? "bg-gradient-to-br from-amber-600 via-orange-600 to-amber-700 text-white rounded-2xl rounded-br-[4px] border border-amber-400/40 shadow-[0_4px_20px_rgba(245,158,11,0.25)]" 
-                        : "bg-slate-950/85 backdrop-blur-md text-amber-50 rounded-2xl rounded-bl-[4px] border border-amber-500/25 shadow-[0_4px_20px_rgba(0,0,0,0.5)]",
-                      !entry.content && entry.image_url ? "bg-transparent shadow-none border-none" : ""
+                        ? "bg-gradient-to-br from-amber-500/35 via-amber-600/25 to-amber-700/20 backdrop-blur-md text-amber-50 rounded-2xl rounded-br-[4px] border border-amber-300/40 shadow-[0_4px_24px_rgba(245,158,11,0.22)]" 
+                        : "bg-white/[0.12] backdrop-blur-md text-white/95 rounded-2xl rounded-bl-[4px] border border-white/20 shadow-[0_4px_20px_rgba(0,0,0,0.18)]",
+                      !entry.content && entry.image_url ? "bg-transparent shadow-none border-none backdrop-blur-none" : ""
                     )}>
                       {entry.image_url && (
                         <div className={clsx(
@@ -707,7 +786,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                       {isMine && !isDeleting && (
                         <button 
                           onClick={() => handleDelete(entry.id, entry.author)}
-                          className="absolute -left-10 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 transition-opacity text-amber-400/60 hover:text-red-400"
+                          className="absolute -left-10 top-1/2 -translate-y-1/2 p-2 opacity-0 group-hover:opacity-100 transition-opacity text-white/50 hover:text-red-400"
                           title="Delete entry"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -717,13 +796,13 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
                   </div>
                   
                   <div className="flex items-center space-x-2 mt-1.5 px-1">
-                    <span className="text-[11px] font-medium text-amber-200/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                    <span className="text-[11px] font-medium text-white/60 drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
                       {format(new Date(entry.created_at), 'h:mm a')}
                     </span>
                     {hasReactions && (
                       <div className="flex -space-x-1">
                         {Object.entries(entry.reactions || {}).map(([reacter, emoji]) => (
-                          <div key={reacter} className="bg-slate-950/95 border border-amber-500/40 px-1.5 py-0.5 rounded-full shadow-sm text-[12px] leading-none" title={reacter}>
+                          <div key={reacter} className="bg-black/35 backdrop-blur-md border border-white/20 px-1.5 py-0.5 rounded-full shadow-sm text-[12px] leading-none text-white" title={reacter}>
                             {emoji as React.ReactNode}
                           </div>
                         ))}
@@ -736,7 +815,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
           </div>
         ))}
         
-        <div ref={bottomRef} className="h-16 shrink-0" />
+        <div ref={bottomRef} className="h-1 shrink-0" />
       </main>
 
       {localAuthor === authorB && (
@@ -746,7 +825,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
             <div className="p-2 border-b border-white/10 bg-white/[0.04]">
               <input
                 type="text"
-                placeholder="Search festive stickers..."
+                placeholder="Search winter stickers..."
                 value={giphySearch}
                 onChange={(e) => setGiphySearch(e.target.value)}
                 className="w-full bg-white/10 text-white text-sm rounded-xl px-3 py-2 outline-none border border-white/15 focus:border-white/40 placeholder:text-white/40"
