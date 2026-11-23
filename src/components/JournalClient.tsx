@@ -172,11 +172,11 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
   const profiles = profilesData?.profiles || {};
 
   useEffect(() => {
+    let saved: string | null = null;
     try {
-      localStorage.removeItem('journal_author');
+      saved = localStorage.getItem('journal_author') || sessionStorage.getItem('journal_author');
     } catch {}
 
-    const saved = sessionStorage.getItem('journal_author');
     if (saved === authorA || saved === authorB) {
       setLocalAuthor(saved);
     }
@@ -239,6 +239,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
 
   const handleSelectAuthor = (author: string) => {
     try {
+      localStorage.setItem('journal_author', author);
       sessionStorage.setItem('journal_author', author);
     } catch {}
     setLocalAuthor(author);
@@ -670,10 +671,7 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         </div>
       </header>
 
-      <main className={clsx(
-        "flex-1 overflow-y-auto px-4 pt-4 flex flex-col space-y-4 relative z-10",
-        localAuthor === authorB ? "pb-6 sm:pb-7" : "pb-[90px] sm:pb-[100px]"
-      )}>
+      <main className="flex-1 overflow-y-auto px-4 pt-4 flex flex-col space-y-4 relative z-10 pb-6 sm:pb-7">
         {isLoading && (
           <div className="flex-1 flex items-center justify-center">
             <Loader2 className="w-8 h-8 text-slate-500 animate-spin" />
@@ -818,7 +816,6 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
         <div ref={bottomRef} className="h-1 shrink-0" />
       </main>
 
-      {localAuthor === authorB && (
       <footer className="bg-transparent px-4 pb-[calc(0.85rem+env(safe-area-inset-bottom))] pt-1 relative z-30 w-full flex flex-col items-center">
         {showStickers && (
           <div className="absolute bottom-full mb-2 w-full max-w-[340px] bg-[#0e291e]/92 border border-white/20 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.4)] backdrop-blur-2xl overflow-hidden flex flex-col h-72 animate-in fade-in slide-in-from-bottom-2 duration-200 z-30">
@@ -958,7 +955,6 @@ export default function JournalClient({ authorA, authorB }: JournalClientProps) 
           </button>
         </form>
       </footer>
-      )}
     </div>
   );
 }
